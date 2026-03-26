@@ -1,10 +1,28 @@
-# finance-service-frontend
 
-Baseline frontend shell for the `financeService` backend.
+---
 
-## Stack
+# `README.md`
 
-- React 19
+```md
+# Finance Service Frontend
+
+Frontend-приложение для работы с финансовым сервисом TrueBIM.
+
+Приложение использует backend с уже готовым HTTP API, OpenAPI/Swagger и стабилизированными контрактами.  
+Основная задача frontend — предоставить интерфейс для работы с:
+
+- `ProjectFinance`
+- `SectionFinancePlan`
+- `PlannedPayment`
+- `PlannedCost`
+- `ActualPayment`
+- `ActualCost`
+
+---
+
+## Стек
+
+- React
 - TypeScript
 - Vite
 - React Router
@@ -14,20 +32,15 @@ Baseline frontend shell for the `financeService` backend.
 - MUI
 - Axios
 
-## Commands
+---
 
-```bash
-yarn
-yarn dev
-yarn build
-yarn lint
-yarn type-check
-```
+## Архитектура проекта
 
-## Environment
-
-Create `.env` from `.env.example` and set:
-
-```bash
-VITE_API_BASE_URL=http://localhost:3000
-```
+```text
+src/
+  app/
+  shared/
+  entities/
+  features/
+  widgets/
+  pages/
