@@ -8,7 +8,12 @@ const DEFAULT_ERROR_MESSAGE =
 export function parseApiError(error: unknown): ApiError {
   if (axios.isAxiosError(error)) {
     const responseData = error.response?.data as
-      | { details?: unknown; error?: unknown; message?: unknown }
+      | {
+          code?: unknown
+          details?: unknown
+          error?: unknown
+          message?: unknown
+        }
       | undefined
 
     const message =
@@ -19,6 +24,7 @@ export function parseApiError(error: unknown): ApiError {
           : error.message || DEFAULT_ERROR_MESSAGE
 
     return {
+      code: typeof responseData?.code === 'string' ? responseData.code : undefined,
       message:
         error.code === AxiosError.ECONNABORTED
           ? 'Request timed out. Please try again.'

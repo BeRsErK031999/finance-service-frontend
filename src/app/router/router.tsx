@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 
 import { RouteErrorPage } from './RouteErrorPage'
+import { ProjectFinanceCreatePage } from '../../pages/project-finance-create/ProjectFinanceCreatePage'
 import { ProjectFinanceDetailsPage } from '../../pages/project-finance-details/ProjectFinanceDetailsPage'
 import { ProjectFinancesPage } from '../../pages/project-finances/ProjectFinancesPage'
 import { NotFoundPage } from '../../pages/not-found/NotFoundPage'
@@ -19,6 +20,10 @@ export const router = createBrowserRouter([
       {
         path: 'project-finances',
         element: <ProjectFinancesPage />,
+      },
+      {
+        path: 'project-finances/create',
+        element: <ProjectFinanceCreatePage />,
       },
       {
         path: 'project-finances/:id',
