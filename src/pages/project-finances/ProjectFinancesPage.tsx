@@ -12,8 +12,10 @@ import { Link as RouterLink } from 'react-router-dom'
 
 import { useProjectFinanceListQuery } from '../../entities/project-finance/api/project-finance.query'
 import type { ProjectFinance } from '../../entities/project-finance/model/types'
+import { formatDateTime } from '../../shared/lib/format'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
+import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 import { PageContainer } from '../../shared/ui/PageContainer'
 import { PageTitle } from '../../shared/ui/PageTitle'
@@ -118,19 +120,20 @@ function ProjectFinanceListItemDetails({
       <Typography color="text.secondary" variant="body2">
         External project: {projectFinance.externalProjectId}
       </Typography>
-      <Typography color="text.secondary" variant="body2">
-        State: {projectFinance.state} | Updated: {formatDateTime(projectFinance.updatedAt)}
-      </Typography>
+      <Stack
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        direction={{ xs: 'column', sm: 'row' }}
+        flexWrap="wrap"
+        gap={1}
+      >
+        <FinanceStatusChip value={projectFinance.state} />
+        <Typography color="text.secondary" variant="body2">
+          Updated: {formatDateTime(projectFinance.updatedAt)}
+        </Typography>
+      </Stack>
       <Typography color="text.secondary" variant="body2">
         {projectFinance.description ?? 'No description'}
       </Typography>
     </Stack>
   )
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
 }

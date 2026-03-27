@@ -1,10 +1,17 @@
 import { useState } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, Paper, Stack, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Button,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useForm } from 'react-hook-form'
 
-import { useCreateSectionFinancePlan } from '../../../../entities/section-finance-plan/api/section-finance-plan.query'
+import { useCreateActualPayment } from '../../../../entities/actual-payment/api/actual-payment.query'
 import { parseApiError } from '../../../../shared/api/parse-api-error'
 import type {
   ApiError,
@@ -12,26 +19,32 @@ import type {
   ApiValidationIssue,
 } from '../../../../shared/types/api'
 import {
-  createSectionFinancePlanFormSchema,
-  defaultCreateSectionFinancePlanFormValues,
-  mapCreateSectionFinancePlanFormValuesToRequest,
-  type CreateSectionFinancePlanFormValues,
+  createActualPaymentFormSchema,
+  defaultCreateActualPaymentFormValues,
+  mapCreateActualPaymentFormValuesToRequest,
+  type CreateActualPaymentFormValues,
 } from '../model/schema'
 
-const FIELD_NAMES = new Set<keyof CreateSectionFinancePlanFormValues>([
-  'description',
-  'externalSectionId',
-  'name',
+const FIELD_NAMES = new Set<keyof CreateActualPaymentFormValues>([
+  'actualDate',
+  'amount',
+  'comment',
 ])
 
-interface CreateSectionFinancePlanFormProps {
+interface CreateActualPaymentFormProps {
+  plannedPaymentId: string
+  plannedPaymentName: string
   projectFinanceId: string
+  onSuccess?: () => void
 }
 
-export function CreateSectionFinancePlanForm({
+export function CreateActualPaymentForm({
+  plannedPaymentId,
+  plannedPaymentName,
   projectFinanceId,
-}: CreateSectionFinancePlanFormProps) {
-  const createSectionFinancePlanMutation = useCreateSectionFinancePlan()
+  onSuccess,
+}: CreateActualPaymentFormProps) {
+  const createActualPaymentMutation = useCreateActualPayment()
   const [formError, setFormError] = useState<string | null>(null)
   const {
     clearErrors,
@@ -40,23 +53,28 @@ export function CreateSectionFinancePlanForm({
     register,
     reset,
     setError,
-  } = useForm<CreateSectionFinancePlanFormValues>({
-    defaultValues: defaultCreateSectionFinancePlanFormValues,
-    resolver: zodResolver(createSectionFinancePlanFormSchema),
+  } = useForm<CreateActualPaymentFormValues>({
+    defaultValues: defaultCreateActualPaymentFormValues,
+    resolver: zodResolver(createActualPaymentFormSchema),
   })
 
-  const isSubmitting = createSectionFinancePlanMutation.isPending
+  const isSubmitting = createActualPaymentMutation.isPending
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null)
     clearErrors()
 
     try {
-      await createSectionFinancePlanMutation.mutateAsync(
-        mapCreateSectionFinancePlanFormValuesToRequest(values, projectFinanceId),
+      await createActualPaymentMutation.mutateAsync(
+        mapCreateActualPaymentFormValuesToRequest(
+          values,
+          projectFinanceId,
+          plannedPaymentId,
+        ),
       )
 
-      reset(defaultCreateSectionFinancePlanFormValues)
+      reset(defaultCreateActualPaymentFormValues)
+      onSuccess?.()
     } catch (error) {
       const apiError = toApiError(error)
       const fieldIssues = getFieldValidationIssues(apiError)
@@ -66,7 +84,7 @@ export function CreateSectionFinancePlanForm({
 
         if (
           typeof fieldName !== 'string' ||
-          !isCreateSectionFinancePlanFieldName(fieldName)
+          !isCreateActualPaymentFieldName(fieldName)
         ) {
           return
         }
@@ -91,10 +109,10 @@ export function CreateSectionFinancePlanForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">New section</Typography>
+          <Typography variant="h6">New actual payment</Typography>
           <Typography color="text.secondary">
-            Use the external section ID that already exists in the backend and
-            belongs to the current project finance.
+            Register the factual incoming movement for planned payment "
+            {plannedPaymentName}".
           </Typography>
         </Stack>
 
@@ -105,37 +123,43 @@ export function CreateSectionFinancePlanForm({
         ) : null}
 
         <TextField
-          {...register('externalSectionId')}
+          {...register('amount')}
           disabled={isSubmitting}
-          error={Boolean(errors.externalSectionId)}
+          error={Boolean(errors.amount)}
           fullWidth
-          helperText={errors.externalSectionId?.message}
-          label="External section ID"
+          helperText={errors.amount?.message ?? 'Use the backend decimal format'}
+          label="Amount"
         />
 
         <TextField
-          {...register('name')}
+          {...register('actualDate')}
           disabled={isSubmitting}
-          error={Boolean(errors.name)}
+          error={Boolean(errors.actualDate)}
           fullWidth
-          helperText={errors.name?.message}
-          label="Section name"
+          helperText={errors.actualDate?.message}
+          label="Actual date"
+          slotProps={{
+            inputLabel: {
+              shrink: true,
+            },
+          }}
+          type="date"
         />
 
         <TextField
-          {...register('description')}
+          {...register('comment')}
           disabled={isSubmitting}
-          error={Boolean(errors.description)}
+          error={Boolean(errors.comment)}
           fullWidth
-          helperText={errors.description?.message ?? 'Optional'}
-          label="Description"
-          minRows={4}
+          helperText={errors.comment?.message ?? 'Optional comment'}
+          label="Comment"
+          minRows={3}
           multiline
         />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create section'}
+            {isSubmitting ? 'Creating...' : 'Create actual payment'}
           </Button>
         </Stack>
       </Stack>
@@ -159,10 +183,7 @@ function getFieldValidationIssues(error: ApiError): ApiValidationIssue[] {
   return error.details.issues.filter((issue) => {
     const fieldName = issue.path[0]
 
-    return (
-      typeof fieldName === 'string' &&
-      isCreateSectionFinancePlanFieldName(fieldName)
-    )
+    return typeof fieldName === 'string' && isCreateActualPaymentFieldName(fieldName)
   })
 }
 
@@ -194,8 +215,8 @@ function isApiValidationErrorDetails(
   return Array.isArray(issues)
 }
 
-function isCreateSectionFinancePlanFieldName(
+function isCreateActualPaymentFieldName(
   value: string,
-): value is keyof CreateSectionFinancePlanFormValues {
-  return FIELD_NAMES.has(value as keyof CreateSectionFinancePlanFormValues)
+): value is keyof CreateActualPaymentFormValues {
+  return FIELD_NAMES.has(value as keyof CreateActualPaymentFormValues)
 }

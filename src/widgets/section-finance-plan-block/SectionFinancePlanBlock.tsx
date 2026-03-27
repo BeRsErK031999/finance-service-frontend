@@ -1,24 +1,28 @@
 import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined'
-import { Alert, Button, Chip, Paper, Stack, Typography } from '@mui/material'
+import { Button, Collapse, Paper, Stack, Typography } from '@mui/material'
 
 import {
   useArchiveSectionFinancePlan,
   useSectionFinancePlans,
 } from '../../entities/section-finance-plan/api/section-finance-plan.query'
-import type {
-  SectionFinancePlan,
-  SectionFinancePlanState,
-} from '../../entities/section-finance-plan/model/types'
+import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { CreateSectionFinancePlanForm } from '../../features/section-finance-plan/create-section-finance-plan/ui/CreateSectionFinancePlanForm'
+import {
+  formatDateTime,
+  formatOptionalDateTime,
+} from '../../shared/lib/format'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import type { ApiError } from '../../shared/types/api'
+import { ArchiveActionButton } from '../../shared/ui/ArchiveActionButton'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
+import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 import { SectionCard } from '../../shared/ui/SectionCard'
+import { PlannedCostBlock } from '../planned-cost-block/PlannedCostBlock'
+import { PlannedPaymentBlock } from '../planned-payment-block/PlannedPaymentBlock'
 
 interface SectionFinancePlanBlockProps {
   projectFinanceId: string
@@ -34,13 +38,11 @@ export function SectionFinancePlanBlock({
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
 
-  const handleCreateToggle = () => {
-    setIsCreateFormOpen((current) => !current)
-  }
-
   const handleArchive = async (sectionFinancePlan: SectionFinancePlan) => {
     if (
-      !window.confirm(`Архивировать раздел "${sectionFinancePlan.name}"?`)
+      !window.confirm(
+        `Archive section finance plan "${sectionFinancePlan.name}"?`,
+      )
     ) {
       return
     }
@@ -61,31 +63,32 @@ export function SectionFinancePlanBlock({
     <SectionCard
       action={
         <Button
-          onClick={handleCreateToggle}
+          onClick={() => setIsCreateFormOpen((current) => !current)}
           startIcon={<AddRoundedIcon />}
           variant="contained"
         >
-          {isCreateFormOpen ? 'Скрыть форму' : 'Добавить раздел'}
+          {isCreateFormOpen ? 'Hide form' : 'Add section'}
         </Button>
       }
-      subtitle="Создавайте и архивируйте разделы финансового плана внутри текущего ProjectFinance."
-      title="Разделы финансового плана"
+      subtitle="Manage the section-level finance plan blocks linked to this project finance."
+      title="Section finance plans"
     >
       <Stack spacing={3}>
-        {isCreateFormOpen ? (
+        <Collapse in={isCreateFormOpen} unmountOnExit>
           <CreateSectionFinancePlanForm projectFinanceId={projectFinanceId} />
-        ) : null}
+        </Collapse>
 
         {archiveError ? (
-          <Alert severity="error" variant="outlined">
-            {archiveError}
-          </Alert>
+          <ErrorState
+            description={archiveError}
+            title="Failed to archive section finance plan"
+          />
         ) : null}
 
         {sectionFinancePlansQuery.isPending ? (
           <LoadingState
-            description="Получаем разделы финансового плана из backend."
-            title="Загрузка разделов"
+            description="Loading section finance plans from the backend."
+            title="Loading sections"
           />
         ) : null}
 
@@ -96,11 +99,11 @@ export function SectionFinancePlanBlock({
                 onClick={() => void sectionFinancePlansQuery.refetch()}
                 variant="contained"
               >
-                Повторить
+                Retry
               </Button>
             }
             description={sectionFinancePlansQuery.error.message}
-            title="Не удалось загрузить разделы"
+            title="Failed to load sections"
           />
         ) : null}
 
@@ -115,12 +118,12 @@ export function SectionFinancePlanBlock({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Добавить раздел
+                  Add section
                 </Button>
               ) : undefined
             }
-            description="Добавьте первый раздел финансового плана для этого проекта."
-            title="Разделы ещё не созданы"
+            description="Create the first section finance plan for this project finance."
+            title="No sections yet"
           />
         ) : null}
 
@@ -156,72 +159,73 @@ function SectionFinancePlanListItem({
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        justifyContent="space-between"
-        spacing={3}
-      >
-        <Stack spacing={1.5} sx={{ flex: 1 }}>
-          <Stack
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-          >
-            <Typography variant="h6">{sectionFinancePlan.name}</Typography>
-            <Chip
-              color={getStateChipColor(sectionFinancePlan.state)}
-              label={getStateLabel(sectionFinancePlan.state)}
-              size="small"
-              variant="outlined"
-            />
+      <Stack spacing={3}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          justifyContent="space-between"
+          spacing={3}
+        >
+          <Stack spacing={1.5} sx={{ flex: 1 }}>
+            <Stack
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+            >
+              <Typography variant="h6">{sectionFinancePlan.name}</Typography>
+              <FinanceStatusChip value={sectionFinancePlan.state} />
+            </Stack>
+
+            <Typography color="text.secondary" variant="body2">
+              External section ID: {sectionFinancePlan.externalSectionId}
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              {sectionFinancePlan.description ?? 'No description'}
+            </Typography>
+
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ flexWrap: 'wrap' }}
+            >
+              <SectionFinancePlanMetaItem
+                label="Version"
+                value={String(sectionFinancePlan.version)}
+              />
+              <SectionFinancePlanMetaItem
+                label="Created"
+                value={formatDateTime(sectionFinancePlan.createdAt)}
+              />
+              <SectionFinancePlanMetaItem
+                label="Updated"
+                value={formatDateTime(sectionFinancePlan.updatedAt)}
+              />
+              <SectionFinancePlanMetaItem
+                label="Archived"
+                value={formatOptionalDateTime(sectionFinancePlan.archivedAt)}
+              />
+            </Stack>
           </Stack>
 
-          <Typography color="text.secondary" variant="body2">
-            Внешний ID раздела: {sectionFinancePlan.externalSectionId}
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            {sectionFinancePlan.description ?? 'Описание не указано'}
-          </Typography>
-
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            sx={{ flexWrap: 'wrap' }}
-          >
-            <SectionFinancePlanMetaItem
-              label="Версия"
-              value={String(sectionFinancePlan.version)}
-            />
-            <SectionFinancePlanMetaItem
-              label="Создан"
-              value={formatDateTime(sectionFinancePlan.createdAt)}
-            />
-            <SectionFinancePlanMetaItem
-              label="Обновлён"
-              value={formatDateTime(sectionFinancePlan.updatedAt)}
-            />
-            <SectionFinancePlanMetaItem
-              label="Архивирован"
-              value={formatOptionalDateTime(sectionFinancePlan.archivedAt)}
+          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <ArchiveActionButton
+              isArchived={isArchived}
+              isArchiving={isArchiving}
+              onClick={() => void onArchive(sectionFinancePlan)}
             />
           </Stack>
         </Stack>
 
-        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-          <Button
-            color="warning"
-            disabled={isArchived || isArchiving}
-            onClick={() => void onArchive(sectionFinancePlan)}
-            startIcon={<ArchiveOutlinedIcon />}
-            variant="outlined"
-          >
-            {isArchiving
-              ? 'Архивация...'
-              : isArchived
-                ? 'В архиве'
-                : 'Архивировать'}
-          </Button>
-        </Stack>
+        <PlannedPaymentBlock
+          projectFinanceId={sectionFinancePlan.projectFinanceId}
+          sectionFinancePlanId={sectionFinancePlan.id}
+          sectionFinancePlanName={sectionFinancePlan.name}
+        />
+
+        <PlannedCostBlock
+          projectFinanceId={sectionFinancePlan.projectFinanceId}
+          sectionFinancePlanId={sectionFinancePlan.id}
+          sectionFinancePlanName={sectionFinancePlan.name}
+        />
       </Stack>
     </Paper>
   )
@@ -258,39 +262,4 @@ function isApiError(error: unknown): error is ApiError {
   }
 
   return typeof (error as { message?: unknown }).message === 'string'
-}
-
-function getStateChipColor(state: SectionFinancePlanState) {
-  if (state === 'ACTIVE') {
-    return 'success'
-  }
-
-  if (state === 'ARCHIVED') {
-    return 'warning'
-  }
-
-  return 'default'
-}
-
-function getStateLabel(state: SectionFinancePlanState) {
-  if (state === 'ACTIVE') {
-    return 'Активен'
-  }
-
-  if (state === 'ARCHIVED') {
-    return 'В архиве'
-  }
-
-  return 'Удалён'
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
-
-function formatOptionalDateTime(value: string | null) {
-  return value ? formatDateTime(value) : 'Не установлен'
 }

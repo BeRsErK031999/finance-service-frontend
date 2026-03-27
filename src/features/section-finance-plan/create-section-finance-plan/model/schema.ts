@@ -6,8 +6,8 @@ export const createSectionFinancePlanFormSchema = z.object({
   externalSectionId: z
     .string()
     .trim()
-    .min(1, 'Введите внешний ID раздела'),
-  name: z.string().trim().min(1, 'Введите название раздела'),
+    .min(1, 'External section ID is required'),
+  name: z.string().trim().min(1, 'Section name is required'),
   description: z.string().trim(),
 })
 

@@ -1,14 +1,19 @@
+import type { ReactNode } from 'react'
+
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import { Button, Divider, Stack, Typography } from '@mui/material'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 
 import { useProjectFinanceDetailsQuery } from '../../entities/project-finance/api/project-finance.query'
+import { formatDateTime, formatOptionalDateTime } from '../../shared/lib/format'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
+import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 import { PageContainer } from '../../shared/ui/PageContainer'
 import { PageTitle } from '../../shared/ui/PageTitle'
 import { SectionCard } from '../../shared/ui/SectionCard'
+import { ProjectFinanceSummaryBlock } from '../../widgets/project-finance-summary-block/ProjectFinanceSummaryBlock'
 import { SectionFinancePlanBlock } from '../../widgets/section-finance-plan-block/SectionFinancePlanBlock'
 
 export function ProjectFinanceDetailsPage() {
@@ -85,8 +90,11 @@ export function ProjectFinanceDetailsPage() {
       ) : null}
 
       {projectFinance ? (
-        <Stack spacing={3}>
-          <SectionCard title="Project finance overview">
+        <Stack spacing={4}>
+          <SectionCard
+            subtitle="Core metadata and backend-driven state for this project finance."
+            title="Project finance overview"
+          >
             <Stack divider={<Divider flexItem />} spacing={2.5}>
               <ProjectFinanceDetailRow label="Name" value={projectFinance.name} />
               <ProjectFinanceDetailRow
@@ -97,7 +105,10 @@ export function ProjectFinanceDetailsPage() {
                 label="Description"
                 value={projectFinance.description ?? 'No description'}
               />
-              <ProjectFinanceDetailRow label="State" value={projectFinance.state} />
+              <ProjectFinanceDetailRow
+                label="State"
+                value={<FinanceStatusChip value={projectFinance.state} />}
+              />
               <ProjectFinanceDetailRow
                 label="Version"
                 value={String(projectFinance.version)}
@@ -121,6 +132,8 @@ export function ProjectFinanceDetailsPage() {
             </Stack>
           </SectionCard>
 
+          <ProjectFinanceSummaryBlock projectFinanceId={projectFinance.id} />
+
           <SectionFinancePlanBlock projectFinanceId={projectFinance.id} />
         </Stack>
       ) : null}
@@ -133,25 +146,14 @@ function ProjectFinanceDetailRow({
   value,
 }: {
   label: string
-  value: string
+  value: ReactNode
 }) {
   return (
     <Stack spacing={0.5}>
       <Typography color="text.secondary" variant="subtitle2">
         {label}
       </Typography>
-      <Typography variant="body1">{value}</Typography>
+      {typeof value === 'string' ? <Typography variant="body1">{value}</Typography> : value}
     </Stack>
   )
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
-
-function formatOptionalDateTime(value: string | null) {
-  return value ? formatDateTime(value) : 'Not set'
 }
