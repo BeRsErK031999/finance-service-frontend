@@ -148,10 +148,10 @@ export function ProjectFinancesPage() {
           }
           description={
             financeCapabilities.canCreateProjectFinance
-              ? 'No ProjectFinance records exist yet. Create the first one to start the flow.'
-              : 'No ProjectFinance records are available for viewing yet.'
+              ? 'No project finances are available to your current access yet. Create a new one to start the flow.'
+              : 'No project finances are available for your current access yet.'
           }
-          title="No project finances yet"
+          title="No accessible project finances"
         />
       ) : null}
 

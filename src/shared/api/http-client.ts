@@ -1,6 +1,7 @@
-import axios from 'axios'
+import axios, { AxiosHeaders } from 'axios'
 
 import { appConfig } from '../config/env'
+import { getCurrentRequestUserId } from '../auth/mock-auth'
 
 export const apiClient = axios.create({
   baseURL: appConfig.apiBaseUrl,
@@ -8,10 +9,20 @@ export const apiClient = axios.create({
   timeoutErrorMessage: 'Request timed out. Please try again.',
   headers: {
     Accept: 'application/json',
-    ...(appConfig.currentUserId === null
-      ? {}
-      : {
-          'x-user-id': appConfig.currentUserId,
-        }),
   },
+})
+
+apiClient.interceptors.request.use((config) => {
+  const headers = AxiosHeaders.from(config.headers)
+  const currentUserId = getCurrentRequestUserId()
+
+  if (currentUserId === null) {
+    headers.delete('x-user-id')
+  } else {
+    headers.set('x-user-id', currentUserId)
+  }
+
+  config.headers = headers
+
+  return config
 })

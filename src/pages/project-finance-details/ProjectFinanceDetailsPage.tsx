@@ -21,6 +21,7 @@ import { LoadingState } from '../../shared/ui/LoadingState'
 import { PageContainer } from '../../shared/ui/PageContainer'
 import { PageTitle } from '../../shared/ui/PageTitle'
 import { SectionCard } from '../../shared/ui/SectionCard'
+import { ProjectFinanceMembersBlock } from '../../widgets/project-finance-members-block/ProjectFinanceMembersBlock'
 import { ProjectFinanceSummaryBlock } from '../../widgets/project-finance-summary-block/ProjectFinanceSummaryBlock'
 import { SectionFinancePlanBlock } from '../../widgets/section-finance-plan-block/SectionFinancePlanBlock'
 
@@ -217,6 +218,11 @@ export function ProjectFinanceDetailsPage() {
           </SectionCard>
 
           <ProjectFinanceSummaryBlock projectFinanceId={projectFinance.id} />
+
+          <ProjectFinanceMembersBlock
+            financeCapabilities={financeCapabilities}
+            projectFinanceId={projectFinance.id}
+          />
 
           <SectionFinancePlanBlock
             financeCapabilities={financeCapabilities}

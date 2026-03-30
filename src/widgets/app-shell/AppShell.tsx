@@ -4,15 +4,31 @@ import {
   Box,
   Button,
   Container,
+  FormControl,
+  MenuItem,
+  Select,
   Stack,
   Toolbar,
   Typography,
 } from '@mui/material'
-import { Link as RouterLink, Outlet } from 'react-router-dom'
+import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom'
 
+import { useMockAuth } from '../../shared/auth/mock-auth'
 import { appConfig } from '../../shared/config/env'
 
 export function AppShell() {
+  const { availableUsers, currentUser, logout, switchUser } = useMockAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
+  if (currentUser === null) {
+    return null
+  }
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <AppBar
@@ -65,9 +81,43 @@ export function AppShell() {
               </Box>
             </Stack>
 
-            <Button component={RouterLink} to="/project-finances" variant="outlined">
-              Project finances
-            </Button>
+            <Stack
+              alignItems={{ xs: 'stretch', md: 'center' }}
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={1.5}
+            >
+              <Button component={RouterLink} to="/project-finances" variant="outlined">
+                Project finances
+              </Button>
+
+              <Stack alignItems="flex-end" spacing={0.25} sx={{ display: { xs: 'none', lg: 'flex' } }}>
+                <Typography color="text.secondary" variant="caption">
+                  Demo session
+                </Typography>
+                <Typography color="text.primary" variant="body2">
+                  {currentUser.label}
+                </Typography>
+              </Stack>
+
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <Select
+                  onChange={(event) => {
+                    switchUser(event.target.value)
+                  }}
+                  value={currentUser.id}
+                >
+                  {availableUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Button onClick={handleLogout} variant="text">
+                Logout
+              </Button>
+            </Stack>
           </Stack>
         </Toolbar>
       </AppBar>

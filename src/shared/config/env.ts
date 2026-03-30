@@ -16,7 +16,7 @@ const env = envSchema.parse({
 
 export const appConfig = {
   apiBaseUrl: env.VITE_API_BASE_URL,
-  currentUserId: env.VITE_CURRENT_USER_ID ?? null,
+  fallbackCurrentUserId: env.VITE_CURRENT_USER_ID ?? null,
 } as const
 
 export type AppConfig = typeof appConfig
