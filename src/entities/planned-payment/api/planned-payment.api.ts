@@ -7,6 +7,7 @@ import type {
   PlannedPayment,
   PlannedPaymentListQuery,
   PlannedPaymentListResponse,
+  UpdatePlannedPaymentRequest,
 } from '../model/types'
 
 export async function listPlannedPayments(
@@ -30,6 +31,15 @@ export async function createPlannedPayment(
 export async function archivePlannedPayment(id: string): Promise<PlannedPayment> {
   return requestWithParsedError(
     apiClient.post<PlannedPayment>(`/planned-payments/${id}/archive`),
+  )
+}
+
+export async function updatePlannedPayment(
+  id: string,
+  payload: UpdatePlannedPaymentRequest,
+): Promise<PlannedPayment> {
+  return requestWithParsedError(
+    apiClient.patch<PlannedPayment>(`/planned-payments/${id}`, payload),
   )
 }
 

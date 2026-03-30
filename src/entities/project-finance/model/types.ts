@@ -32,3 +32,10 @@ export interface CreateProjectFinanceRequest {
   name: string
   description?: string | null
 }
+
+export interface UpdateProjectFinanceRequest {
+  externalProjectId: string
+  name: string
+  description?: string | null
+  version: number
+}

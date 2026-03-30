@@ -10,11 +10,13 @@ import type {
   ProjectFinance,
   ProjectFinanceListQuery,
   ProjectFinanceListResponse,
+  UpdateProjectFinanceRequest,
 } from '../model/types'
 import {
   createProjectFinance,
   getProjectFinanceById,
   listProjectFinances,
+  updateProjectFinance,
 } from './project-finance.api'
 
 export const projectFinanceQueryKeys = {
@@ -53,6 +55,23 @@ export function useCreateProjectFinanceMutation() {
         projectFinanceQueryKeys.detail(projectFinance.id),
         projectFinance,
       )
+      void queryClient.invalidateQueries({
+        queryKey: projectFinanceQueryKeys.lists(),
+      })
+    },
+  })
+}
+
+export function useUpdateProjectFinanceMutation(projectFinanceId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<ProjectFinance, ApiError, UpdateProjectFinanceRequest>({
+    mutationFn: (payload: UpdateProjectFinanceRequest) =>
+      updateProjectFinance(projectFinanceId, payload),
+    onSuccess: (projectFinance) => {
+      void queryClient.invalidateQueries({
+        queryKey: projectFinanceQueryKeys.detail(projectFinance.id),
+      })
       void queryClient.invalidateQueries({
         queryKey: projectFinanceQueryKeys.lists(),
       })

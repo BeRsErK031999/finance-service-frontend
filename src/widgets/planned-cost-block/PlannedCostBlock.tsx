@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import {
   Button,
   Chip,
@@ -21,7 +22,9 @@ import {
 } from '../../entities/planned-cost/api/planned-cost.query'
 import type { PlannedCost } from '../../entities/planned-cost/model/types'
 import { CreateActualCostForm } from '../../features/actual-cost/create-actual-cost/ui/CreateActualCostForm'
+import { EditPlannedCostForm } from '../../features/planned-cost/edit-planned-cost/ui/EditPlannedCostForm'
 import { CreatePlannedCostForm } from '../../features/planned-cost/create-planned-cost/ui/CreatePlannedCostForm'
+import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import {
   formatAmount,
@@ -38,12 +41,14 @@ import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 
 interface PlannedCostBlockProps {
+  availableSectionFinancePlans: SectionFinancePlan[]
   projectFinanceId: string
   sectionFinancePlanId: string
   sectionFinancePlanName: string
 }
 
 export function PlannedCostBlock({
+  availableSectionFinancePlans,
   projectFinanceId,
   sectionFinancePlanId,
   sectionFinancePlanName,
@@ -159,6 +164,7 @@ export function PlannedCostBlock({
           <Stack spacing={2}>
             {plannedCosts.map((plannedCost) => (
               <PlannedCostListItem
+                availableSectionFinancePlans={availableSectionFinancePlans}
                 isArchiving={archivingId === plannedCost.id}
                 key={plannedCost.id}
                 onArchive={handleArchive}
@@ -173,15 +179,28 @@ export function PlannedCostBlock({
 }
 
 function PlannedCostListItem({
+  availableSectionFinancePlans,
   isArchiving,
   onArchive,
   plannedCost,
 }: {
+  availableSectionFinancePlans: SectionFinancePlan[]
   isArchiving: boolean
   onArchive: (plannedCost: PlannedCost) => Promise<void>
   plannedCost: PlannedCost
 }) {
+  const actualCostsQuery = useActualCosts({
+    plannedCostId: plannedCost.id,
+  })
+  const actualCosts = actualCostsQuery.data?.items ?? []
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const isArchived = plannedCost.state !== 'ACTIVE'
+  const editAvailabilityReason = getPlannedCostEditAvailabilityReason({
+    actualCosts,
+    hasActualCostsError: actualCostsQuery.isError,
+    isActualCostsPending: actualCostsQuery.isPending,
+  })
+  const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -257,6 +276,23 @@ function PlannedCostListItem({
           </Stack>
 
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <Button
+              disabled={isArchived || editAvailabilityReason !== null}
+              onClick={() => setIsEditFormOpen((current) => !current)}
+              startIcon={<EditOutlinedIcon />}
+              variant="outlined"
+            >
+              {isEditFormVisible ? 'Hide form' : 'Edit'}
+            </Button>
+            {editAvailabilityReason ? (
+              <Typography
+                color="text.secondary"
+                sx={{ maxWidth: 240 }}
+                variant="caption"
+              >
+                {editAvailabilityReason}
+              </Typography>
+            ) : null}
             <ArchiveActionButton
               isArchived={isArchived}
               isArchiving={isArchiving}
@@ -264,6 +300,15 @@ function PlannedCostListItem({
             />
           </Stack>
         </Stack>
+
+        <Collapse in={isEditFormVisible} unmountOnExit>
+          <EditPlannedCostForm
+            availableSectionFinancePlans={availableSectionFinancePlans}
+            onCancel={() => setIsEditFormOpen(false)}
+            onSuccess={() => setIsEditFormOpen(false)}
+            plannedCost={plannedCost}
+          />
+        </Collapse>
 
         <ActualCostSection plannedCost={plannedCost} />
       </Stack>
@@ -529,4 +574,28 @@ function isApiError(error: unknown): error is ApiError {
   }
 
   return typeof (error as { message?: unknown }).message === 'string'
+}
+
+function getPlannedCostEditAvailabilityReason({
+  actualCosts,
+  hasActualCostsError,
+  isActualCostsPending,
+}: {
+  actualCosts: ActualCost[]
+  hasActualCostsError: boolean
+  isActualCostsPending: boolean
+}) {
+  if (isActualCostsPending) {
+    return 'Checking actual costs before enabling edit.'
+  }
+
+  if (hasActualCostsError) {
+    return 'Load actual costs successfully before editing this planned cost.'
+  }
+
+  if (actualCosts.some((actualCost) => actualCost.state === 'ACTIVE')) {
+    return 'Archive the active actual cost to edit this planned cost.'
+  }
+
+  return null
 }

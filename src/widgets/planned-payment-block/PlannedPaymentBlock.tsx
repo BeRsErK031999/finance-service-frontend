@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import {
   Button,
   Chip,
@@ -21,7 +22,9 @@ import {
 } from '../../entities/planned-payment/api/planned-payment.query'
 import type { PlannedPayment } from '../../entities/planned-payment/model/types'
 import { CreateActualPaymentForm } from '../../features/actual-payment/create-actual-payment/ui/CreateActualPaymentForm'
+import { EditPlannedPaymentForm } from '../../features/planned-payment/edit-planned-payment/ui/EditPlannedPaymentForm'
 import { CreatePlannedPaymentForm } from '../../features/planned-payment/create-planned-payment/ui/CreatePlannedPaymentForm'
+import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import {
   formatAmount,
@@ -38,12 +41,14 @@ import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 
 interface PlannedPaymentBlockProps {
+  availableSectionFinancePlans: SectionFinancePlan[]
   projectFinanceId: string
   sectionFinancePlanId: string
   sectionFinancePlanName: string
 }
 
 export function PlannedPaymentBlock({
+  availableSectionFinancePlans,
   projectFinanceId,
   sectionFinancePlanId,
   sectionFinancePlanName,
@@ -162,6 +167,7 @@ export function PlannedPaymentBlock({
           <Stack spacing={2}>
             {plannedPayments.map((plannedPayment) => (
               <PlannedPaymentListItem
+                availableSectionFinancePlans={availableSectionFinancePlans}
                 isArchiving={archivingId === plannedPayment.id}
                 key={plannedPayment.id}
                 onArchive={handleArchive}
@@ -176,15 +182,28 @@ export function PlannedPaymentBlock({
 }
 
 function PlannedPaymentListItem({
+  availableSectionFinancePlans,
   isArchiving,
   onArchive,
   plannedPayment,
 }: {
+  availableSectionFinancePlans: SectionFinancePlan[]
   isArchiving: boolean
   onArchive: (plannedPayment: PlannedPayment) => Promise<void>
   plannedPayment: PlannedPayment
 }) {
+  const actualPaymentsQuery = useActualPayments({
+    plannedPaymentId: plannedPayment.id,
+  })
+  const actualPayments = actualPaymentsQuery.data?.items ?? []
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const isArchived = plannedPayment.state !== 'ACTIVE'
+  const editAvailabilityReason = getPlannedPaymentEditAvailabilityReason({
+    actualPayments,
+    hasActualPaymentsError: actualPaymentsQuery.isError,
+    isActualPaymentsPending: actualPaymentsQuery.isPending,
+  })
+  const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -260,6 +279,23 @@ function PlannedPaymentListItem({
           </Stack>
 
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <Button
+              disabled={isArchived || editAvailabilityReason !== null}
+              onClick={() => setIsEditFormOpen((current) => !current)}
+              startIcon={<EditOutlinedIcon />}
+              variant="outlined"
+            >
+              {isEditFormVisible ? 'Hide form' : 'Edit'}
+            </Button>
+            {editAvailabilityReason ? (
+              <Typography
+                color="text.secondary"
+                sx={{ maxWidth: 240 }}
+                variant="caption"
+              >
+                {editAvailabilityReason}
+              </Typography>
+            ) : null}
             <ArchiveActionButton
               isArchived={isArchived}
               isArchiving={isArchiving}
@@ -267,6 +303,15 @@ function PlannedPaymentListItem({
             />
           </Stack>
         </Stack>
+
+        <Collapse in={isEditFormVisible} unmountOnExit>
+          <EditPlannedPaymentForm
+            availableSectionFinancePlans={availableSectionFinancePlans}
+            onCancel={() => setIsEditFormOpen(false)}
+            onSuccess={() => setIsEditFormOpen(false)}
+            plannedPayment={plannedPayment}
+          />
+        </Collapse>
 
         <ActualPaymentSection plannedPayment={plannedPayment} />
       </Stack>
@@ -534,4 +579,28 @@ function isApiError(error: unknown): error is ApiError {
   }
 
   return typeof (error as { message?: unknown }).message === 'string'
+}
+
+function getPlannedPaymentEditAvailabilityReason({
+  actualPayments,
+  hasActualPaymentsError,
+  isActualPaymentsPending,
+}: {
+  actualPayments: ActualPayment[]
+  hasActualPaymentsError: boolean
+  isActualPaymentsPending: boolean
+}) {
+  if (isActualPaymentsPending) {
+    return 'Checking actual payments before enabling edit.'
+  }
+
+  if (hasActualPaymentsError) {
+    return 'Load actual payments successfully before editing this planned payment.'
+  }
+
+  if (actualPayments.some((actualPayment) => actualPayment.state === 'ACTIVE')) {
+    return 'Archive the active actual payment to edit this planned payment.'
+  }
+
+  return null
 }

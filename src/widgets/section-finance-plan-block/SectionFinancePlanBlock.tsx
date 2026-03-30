@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Button, Collapse, Paper, Stack, Typography } from '@mui/material'
 
 import {
@@ -9,6 +10,7 @@ import {
 } from '../../entities/section-finance-plan/api/section-finance-plan.query'
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { CreateSectionFinancePlanForm } from '../../features/section-finance-plan/create-section-finance-plan/ui/CreateSectionFinancePlanForm'
+import { EditSectionFinancePlanForm } from '../../features/section-finance-plan/edit-section-finance-plan/ui/EditSectionFinancePlanForm'
 import {
   formatDateTime,
   formatOptionalDateTime,
@@ -133,6 +135,7 @@ export function SectionFinancePlanBlock({
           <Stack spacing={2}>
             {sectionFinancePlans.map((sectionFinancePlan) => (
               <SectionFinancePlanListItem
+                availableSectionFinancePlans={sectionFinancePlans}
                 isArchiving={archivingId === sectionFinancePlan.id}
                 key={sectionFinancePlan.id}
                 onArchive={handleArchive}
@@ -147,15 +150,19 @@ export function SectionFinancePlanBlock({
 }
 
 function SectionFinancePlanListItem({
+  availableSectionFinancePlans,
   isArchiving,
   onArchive,
   sectionFinancePlan,
 }: {
+  availableSectionFinancePlans: SectionFinancePlan[]
   isArchiving: boolean
   onArchive: (sectionFinancePlan: SectionFinancePlan) => Promise<void>
   sectionFinancePlan: SectionFinancePlan
 }) {
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const isArchived = sectionFinancePlan.state !== 'ACTIVE'
+  const isEditFormVisible = !isArchived && isEditFormOpen
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -207,6 +214,14 @@ function SectionFinancePlanListItem({
           </Stack>
 
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <Button
+              disabled={isArchived}
+              onClick={() => setIsEditFormOpen((current) => !current)}
+              startIcon={<EditOutlinedIcon />}
+              variant="outlined"
+            >
+              {isEditFormVisible ? 'Hide form' : 'Edit'}
+            </Button>
             <ArchiveActionButton
               isArchived={isArchived}
               isArchiving={isArchiving}
@@ -215,13 +230,23 @@ function SectionFinancePlanListItem({
           </Stack>
         </Stack>
 
+        <Collapse in={isEditFormVisible} unmountOnExit>
+          <EditSectionFinancePlanForm
+            onCancel={() => setIsEditFormOpen(false)}
+            onSuccess={() => setIsEditFormOpen(false)}
+            sectionFinancePlan={sectionFinancePlan}
+          />
+        </Collapse>
+
         <PlannedPaymentBlock
+          availableSectionFinancePlans={availableSectionFinancePlans}
           projectFinanceId={sectionFinancePlan.projectFinanceId}
           sectionFinancePlanId={sectionFinancePlan.id}
           sectionFinancePlanName={sectionFinancePlan.name}
         />
 
         <PlannedCostBlock
+          availableSectionFinancePlans={availableSectionFinancePlans}
           projectFinanceId={sectionFinancePlan.projectFinanceId}
           sectionFinancePlanId={sectionFinancePlan.id}
           sectionFinancePlanName={sectionFinancePlan.name}

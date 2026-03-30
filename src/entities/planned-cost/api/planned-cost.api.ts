@@ -7,6 +7,7 @@ import type {
   PlannedCost,
   PlannedCostListQuery,
   PlannedCostListResponse,
+  UpdatePlannedCostRequest,
 } from '../model/types'
 
 export async function listPlannedCosts(
@@ -30,6 +31,15 @@ export async function createPlannedCost(
 export async function archivePlannedCost(id: string): Promise<PlannedCost> {
   return requestWithParsedError(
     apiClient.post<PlannedCost>(`/planned-costs/${id}/archive`),
+  )
+}
+
+export async function updatePlannedCost(
+  id: string,
+  payload: UpdatePlannedCostRequest,
+): Promise<PlannedCost> {
+  return requestWithParsedError(
+    apiClient.patch<PlannedCost>(`/planned-costs/${id}`, payload),
   )
 }
 

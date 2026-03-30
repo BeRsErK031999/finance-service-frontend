@@ -9,11 +9,13 @@ import type {
   CreateSectionFinancePlanRequest,
   SectionFinancePlan,
   SectionFinancePlanListResponse,
+  UpdateSectionFinancePlanRequest,
 } from '../model/types'
 import {
   archiveSectionFinancePlan,
   createSectionFinancePlan,
   getSectionFinancePlans,
+  updateSectionFinancePlan,
 } from './section-finance-plan.api'
 
 export const sectionFinancePlanKeys = {
@@ -53,6 +55,20 @@ export function useArchiveSectionFinancePlan() {
 
   return useMutation<SectionFinancePlan, ApiError, string>({
     mutationFn: (id: string) => archiveSectionFinancePlan(id),
+    onSuccess: (sectionFinancePlan) => {
+      void queryClient.invalidateQueries({
+        queryKey: sectionFinancePlanKeys.list(sectionFinancePlan.projectFinanceId),
+      })
+    },
+  })
+}
+
+export function useUpdateSectionFinancePlan(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<SectionFinancePlan, ApiError, UpdateSectionFinancePlanRequest>({
+    mutationFn: (payload: UpdateSectionFinancePlanRequest) =>
+      updateSectionFinancePlan(id, payload),
     onSuccess: (sectionFinancePlan) => {
       void queryClient.invalidateQueries({
         queryKey: sectionFinancePlanKeys.list(sectionFinancePlan.projectFinanceId),

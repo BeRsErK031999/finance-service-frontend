@@ -9,11 +9,13 @@ import type {
   CreatePlannedCostRequest,
   PlannedCost,
   PlannedCostListResponse,
+  UpdatePlannedCostRequest,
 } from '../model/types'
 import {
   archivePlannedCost,
   createPlannedCost,
   listPlannedCosts,
+  updatePlannedCost,
 } from './planned-cost.api'
 
 export const plannedCostKeys = {
@@ -52,6 +54,19 @@ export function useArchivePlannedCost() {
 
   return useMutation<PlannedCost, ApiError, string>({
     mutationFn: (id: string) => archivePlannedCost(id),
+    onSuccess: (plannedCost) => {
+      void queryClient.invalidateQueries({
+        queryKey: plannedCostKeys.list(plannedCost.projectFinanceId),
+      })
+    },
+  })
+}
+
+export function useUpdatePlannedCost(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<PlannedCost, ApiError, UpdatePlannedCostRequest>({
+    mutationFn: (payload: UpdatePlannedCostRequest) => updatePlannedCost(id, payload),
     onSuccess: (plannedCost) => {
       void queryClient.invalidateQueries({
         queryKey: plannedCostKeys.list(plannedCost.projectFinanceId),

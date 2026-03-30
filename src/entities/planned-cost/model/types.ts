@@ -54,3 +54,14 @@ export interface CreatePlannedCostRequest {
   projectEventIds?: string[]
   sectionEventIds?: string[]
 }
+
+export interface UpdatePlannedCostRequest {
+  name: string
+  amount: string
+  conditionSource: PlannedCostConditionSource
+  plannedDate?: string | null
+  sectionFinancePlanIds: string[]
+  projectEventIds?: string[]
+  sectionEventIds?: string[]
+  version: number
+}

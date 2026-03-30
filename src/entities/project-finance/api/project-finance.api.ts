@@ -7,6 +7,7 @@ import type {
   ProjectFinance,
   ProjectFinanceListQuery,
   ProjectFinanceListResponse,
+  UpdateProjectFinanceRequest,
 } from '../model/types'
 
 export async function listProjectFinances(
@@ -32,6 +33,18 @@ export async function createProjectFinance(
 ): Promise<ProjectFinance> {
   return requestWithParsedError(
     apiClient.post<ProjectFinance>('/project-finances', payload),
+  )
+}
+
+export async function updateProjectFinance(
+  projectFinanceId: string,
+  payload: UpdateProjectFinanceRequest,
+): Promise<ProjectFinance> {
+  return requestWithParsedError(
+    apiClient.patch<ProjectFinance>(
+      `/project-finances/${projectFinanceId}`,
+      payload,
+    ),
   )
 }
 

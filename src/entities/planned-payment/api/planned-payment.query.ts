@@ -9,11 +9,13 @@ import type {
   CreatePlannedPaymentRequest,
   PlannedPayment,
   PlannedPaymentListResponse,
+  UpdatePlannedPaymentRequest,
 } from '../model/types'
 import {
   archivePlannedPayment,
   createPlannedPayment,
   listPlannedPayments,
+  updatePlannedPayment,
 } from './planned-payment.api'
 
 export const plannedPaymentKeys = {
@@ -53,6 +55,20 @@ export function useArchivePlannedPayment() {
 
   return useMutation<PlannedPayment, ApiError, string>({
     mutationFn: (id: string) => archivePlannedPayment(id),
+    onSuccess: (plannedPayment) => {
+      void queryClient.invalidateQueries({
+        queryKey: plannedPaymentKeys.list(plannedPayment.projectFinanceId),
+      })
+    },
+  })
+}
+
+export function useUpdatePlannedPayment(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<PlannedPayment, ApiError, UpdatePlannedPaymentRequest>({
+    mutationFn: (payload: UpdatePlannedPaymentRequest) =>
+      updatePlannedPayment(id, payload),
     onSuccess: (plannedPayment) => {
       void queryClient.invalidateQueries({
         queryKey: plannedPaymentKeys.list(plannedPayment.projectFinanceId),

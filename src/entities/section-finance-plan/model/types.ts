@@ -31,3 +31,10 @@ export interface CreateSectionFinancePlanRequest {
   name: string
   description?: string | null
 }
+
+export interface UpdateSectionFinancePlanRequest {
+  externalSectionId: string
+  name: string
+  description?: string | null
+  version: number
+}

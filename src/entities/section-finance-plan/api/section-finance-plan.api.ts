@@ -6,6 +6,7 @@ import type {
   CreateSectionFinancePlanRequest,
   SectionFinancePlan,
   SectionFinancePlanListResponse,
+  UpdateSectionFinancePlanRequest,
 } from '../model/types'
 
 export async function getSectionFinancePlans(
@@ -33,6 +34,15 @@ export async function archiveSectionFinancePlan(
 ): Promise<SectionFinancePlan> {
   return requestWithParsedError(
     apiClient.post<SectionFinancePlan>(`/section-finance-plans/${id}/archive`),
+  )
+}
+
+export async function updateSectionFinancePlan(
+  id: string,
+  payload: UpdateSectionFinancePlanRequest,
+): Promise<SectionFinancePlan> {
+  return requestWithParsedError(
+    apiClient.patch<SectionFinancePlan>(`/section-finance-plans/${id}`, payload),
   )
 }
 

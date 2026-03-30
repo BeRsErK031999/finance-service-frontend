@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import { Button, Divider, Stack, Typography } from '@mui/material'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import { Button, Collapse, Divider, Stack, Typography } from '@mui/material'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 
 import { useProjectFinanceDetailsQuery } from '../../entities/project-finance/api/project-finance.query'
+import { EditProjectFinanceForm } from '../../features/project-finance/edit-project-finance/ui/EditProjectFinanceForm'
 import { formatDateTime, formatOptionalDateTime } from '../../shared/lib/format'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
@@ -19,6 +22,7 @@ import { SectionFinancePlanBlock } from '../../widgets/section-finance-plan-bloc
 export function ProjectFinanceDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const projectFinanceQuery = useProjectFinanceDetailsQuery(id)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const projectFinance = projectFinanceQuery.data
   const title = projectFinance?.name ?? 'Project finance details'
   const subtitle = projectFinance
@@ -92,43 +96,63 @@ export function ProjectFinanceDetailsPage() {
       {projectFinance ? (
         <Stack spacing={4}>
           <SectionCard
+            action={
+              <Button
+                disabled={projectFinance.state !== 'ACTIVE'}
+                onClick={() => setIsEditFormOpen((current) => !current)}
+                startIcon={<EditOutlinedIcon />}
+                variant="outlined"
+              >
+                {isEditFormOpen ? 'Hide form' : 'Edit'}
+              </Button>
+            }
             subtitle="Core metadata and backend-driven state for this project finance."
             title="Project finance overview"
           >
-            <Stack divider={<Divider flexItem />} spacing={2.5}>
-              <ProjectFinanceDetailRow label="Name" value={projectFinance.name} />
-              <ProjectFinanceDetailRow
-                label="External project ID"
-                value={projectFinance.externalProjectId}
-              />
-              <ProjectFinanceDetailRow
-                label="Description"
-                value={projectFinance.description ?? 'No description'}
-              />
-              <ProjectFinanceDetailRow
-                label="State"
-                value={<FinanceStatusChip value={projectFinance.state} />}
-              />
-              <ProjectFinanceDetailRow
-                label="Version"
-                value={String(projectFinance.version)}
-              />
-              <ProjectFinanceDetailRow
-                label="Created at"
-                value={formatDateTime(projectFinance.createdAt)}
-              />
-              <ProjectFinanceDetailRow
-                label="Updated at"
-                value={formatDateTime(projectFinance.updatedAt)}
-              />
-              <ProjectFinanceDetailRow
-                label="Archived at"
-                value={formatOptionalDateTime(projectFinance.archivedAt)}
-              />
-              <ProjectFinanceDetailRow
-                label="Deleted at"
-                value={formatOptionalDateTime(projectFinance.deletedAt)}
-              />
+            <Stack spacing={3}>
+              <Stack divider={<Divider flexItem />} spacing={2.5}>
+                <ProjectFinanceDetailRow label="Name" value={projectFinance.name} />
+                <ProjectFinanceDetailRow
+                  label="External project ID"
+                  value={projectFinance.externalProjectId}
+                />
+                <ProjectFinanceDetailRow
+                  label="Description"
+                  value={projectFinance.description ?? 'No description'}
+                />
+                <ProjectFinanceDetailRow
+                  label="State"
+                  value={<FinanceStatusChip value={projectFinance.state} />}
+                />
+                <ProjectFinanceDetailRow
+                  label="Version"
+                  value={String(projectFinance.version)}
+                />
+                <ProjectFinanceDetailRow
+                  label="Created at"
+                  value={formatDateTime(projectFinance.createdAt)}
+                />
+                <ProjectFinanceDetailRow
+                  label="Updated at"
+                  value={formatDateTime(projectFinance.updatedAt)}
+                />
+                <ProjectFinanceDetailRow
+                  label="Archived at"
+                  value={formatOptionalDateTime(projectFinance.archivedAt)}
+                />
+                <ProjectFinanceDetailRow
+                  label="Deleted at"
+                  value={formatOptionalDateTime(projectFinance.deletedAt)}
+                />
+              </Stack>
+
+              <Collapse in={isEditFormOpen} unmountOnExit>
+                <EditProjectFinanceForm
+                  onCancel={() => setIsEditFormOpen(false)}
+                  onSuccess={() => setIsEditFormOpen(false)}
+                  projectFinance={projectFinance}
+                />
+              </Collapse>
             </Stack>
           </SectionCard>
 
