@@ -53,12 +53,12 @@ export function ProjectFinancesPage() {
               to="/project-finances/create"
               variant="contained"
             >
-              New project finance
+              Создать финансовый план
             </Button>
           ) : undefined
         }
-        subtitle="Browse ProjectFinance records available to your current finance access."
-        title="Project finances"
+        subtitle="Список финансовых планов проектов, доступных вам в текущей роли."
+        title="Финансовые планы проектов"
       />
 
       {!projectFinanceGlobalAccessQuery.isPending &&
@@ -70,8 +70,8 @@ export function ProjectFinancesPage() {
 
       {projectFinanceGlobalAccessQuery.isPending ? (
         <LoadingState
-          description="Finance module access is loading from the backend."
-          title="Loading finance access"
+          description="Проверяем доступ к финансовому модулю."
+          title="Загружаем права доступа"
         />
       ) : null}
 
@@ -82,11 +82,11 @@ export function ProjectFinancesPage() {
               onClick={() => void projectFinanceGlobalAccessQuery.refetch()}
               variant="contained"
             >
-              Retry
+              Повторить
             </Button>
           }
           description={projectFinanceGlobalAccessQuery.error.message}
-          title="Failed to load finance access"
+          title="Не удалось загрузить права доступа"
         />
       ) : null}
 
@@ -96,9 +96,9 @@ export function ProjectFinancesPage() {
         <EmptyState
           description={
             financeCapabilities.readOnlyReason ??
-            'Current user access for the finance module is not available.'
+            'Для текущего пользователя доступ к финансовому модулю недоступен.'
           }
-          title="Finance access is denied"
+          title="Нет доступа к модулю"
         />
       ) : null}
 
@@ -107,8 +107,8 @@ export function ProjectFinancesPage() {
       canViewProjectFinanceList &&
       projectFinancesQuery.isPending ? (
         <LoadingState
-          description="Project finances are loading from the backend."
-          title="Loading project finances"
+          description="Загружаем список финансовых планов."
+          title="Загружаем финансовые планы"
         />
       ) : null}
 
@@ -119,11 +119,11 @@ export function ProjectFinancesPage() {
         <ErrorState
           action={
             <Button onClick={() => void projectFinancesQuery.refetch()} variant="contained">
-              Retry
+              Повторить
             </Button>
           }
           description={projectFinancesQuery.error.message}
-          title="Failed to load project finances"
+          title="Не удалось загрузить финансовые планы"
         />
       ) : null}
 
@@ -142,16 +142,16 @@ export function ProjectFinancesPage() {
                 to="/project-finances/create"
                 variant="contained"
               >
-                Create project finance
+                Создать финансовый план
               </Button>
             ) : undefined
           }
           description={
             financeCapabilities.canCreateProjectFinance
-              ? 'No project finances are available to your current access yet. Create a new one to start the flow.'
-              : 'No project finances are available for your current access yet.'
+              ? 'У вас пока нет доступных финансовых планов. Создайте первый план, чтобы начать работу.'
+              : 'Для вашей роли пока нет доступных финансовых планов.'
           }
-          title="No accessible project finances"
+          title="Пока нет доступных планов"
         />
       ) : null}
 
@@ -162,8 +162,8 @@ export function ProjectFinancesPage() {
       !projectFinancesQuery.isError &&
       projectFinances.length > 0 ? (
         <SectionCard
-          subtitle={`${projectFinances.length} record${projectFinances.length === 1 ? '' : 's'} available.`}
-          title="Project finance list"
+          subtitle={formatProjectFinanceListSubtitle(projectFinances.length)}
+          title="Список финансовых планов"
         >
           <List disablePadding>
             {projectFinances.map((projectFinance, index) => (
@@ -196,7 +196,7 @@ function ProjectFinanceListItemDetails({
   return (
     <Stack spacing={0.5} sx={{ mt: 1 }}>
       <Typography color="text.secondary" variant="body2">
-        External project: {projectFinance.externalProjectId}
+        ID проекта во внешней системе: {projectFinance.externalProjectId}
       </Typography>
       <Stack
         alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -206,12 +206,20 @@ function ProjectFinanceListItemDetails({
       >
         <FinanceStatusChip value={projectFinance.state} />
         <Typography color="text.secondary" variant="body2">
-          Updated: {formatDateTime(projectFinance.updatedAt)}
+          Обновлено: {formatDateTime(projectFinance.updatedAt)}
         </Typography>
       </Stack>
       <Typography color="text.secondary" variant="body2">
-        {projectFinance.description ?? 'No description'}
+        {projectFinance.description ?? 'Описание не указано'}
       </Typography>
     </Stack>
   )
+}
+
+function formatProjectFinanceListSubtitle(count: number) {
+  if (count === 1) {
+    return 'Доступен 1 финансовый план.'
+  }
+
+  return `Доступно ${count} финансовых планов.`
 }

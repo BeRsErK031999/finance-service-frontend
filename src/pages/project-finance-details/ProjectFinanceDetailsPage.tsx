@@ -34,12 +34,12 @@ export function ProjectFinanceDetailsPage() {
     projectFinanceAccess: projectFinanceAccessQuery.data ?? null,
   })
   const projectFinance = projectFinanceQuery.data
-  const title = projectFinance?.name ?? 'Project finance details'
+  const title = projectFinance?.name ?? 'Финансовый план проекта'
   const subtitle = projectFinance
-    ? `External project: ${projectFinance.externalProjectId}`
+    ? `Внешний ID проекта: ${projectFinance.externalProjectId}`
     : id
-      ? `Project finance ID: ${id}`
-      : 'Project finance identifier is missing.'
+      ? `ID финансового плана: ${id}`
+      : 'Идентификатор финансового плана не указан.'
 
   return (
     <PageContainer>
@@ -51,7 +51,7 @@ export function ProjectFinanceDetailsPage() {
             to="/project-finances"
             variant="text"
           >
-            Back to list
+            К списку
           </Button>
         }
         subtitle={subtitle}
@@ -64,22 +64,22 @@ export function ProjectFinanceDetailsPage() {
 
       {!id ? (
         <EmptyState
-          description="Open this page from the project finance list so the route contains a valid identifier."
-          title="Project finance ID is missing"
+          description="Откройте эту страницу из списка финансовых планов, чтобы в маршруте был корректный идентификатор."
+          title="Не указан ID финансового плана"
         />
       ) : null}
 
       {id && projectFinanceQuery.isPending ? (
         <LoadingState
-          description="Project finance details are loading from the backend."
-          title="Loading project finance"
+          description="Загружаем данные финансового плана."
+          title="Загружаем финансовый план"
         />
       ) : null}
 
       {id && projectFinanceQuery.isError && projectFinanceQuery.error.statusCode === 404 ? (
         <EmptyState
-          description="The requested ProjectFinance record does not exist or is no longer available."
-          title="Project finance not found"
+          description="Запрошенный финансовый план не найден или больше недоступен."
+          title="Финансовый план не найден"
         />
       ) : null}
 
@@ -89,11 +89,11 @@ export function ProjectFinanceDetailsPage() {
         <ErrorState
           action={
             <Button onClick={() => void projectFinanceQuery.refetch()} variant="contained">
-              Retry
+              Повторить
             </Button>
           }
           description={projectFinanceQuery.error.message}
-          title="Failed to load project finance"
+          title="Не удалось загрузить финансовый план"
         />
       ) : null}
 
@@ -103,8 +103,8 @@ export function ProjectFinanceDetailsPage() {
       projectFinance &&
       projectFinanceAccessQuery.isPending ? (
         <LoadingState
-          description="Project finance access is loading from the backend."
-          title="Loading finance access"
+          description="Проверяем доступ к этому финансовому плану."
+          title="Загружаем права доступа"
         />
       ) : null}
 
@@ -116,11 +116,11 @@ export function ProjectFinanceDetailsPage() {
         <ErrorState
           action={
             <Button onClick={() => void projectFinanceAccessQuery.refetch()} variant="contained">
-              Retry
+              Повторить
             </Button>
           }
           description={projectFinanceAccessQuery.error.message}
-          title="Failed to load finance access"
+          title="Не удалось загрузить права доступа"
         />
       ) : null}
 
@@ -129,8 +129,8 @@ export function ProjectFinanceDetailsPage() {
       !projectFinanceQuery.isError &&
       !projectFinance ? (
         <EmptyState
-          description="Backend returned no ProjectFinance data for this route."
-          title="Project finance is unavailable"
+          description="Backend не вернул данные по этому маршруту."
+          title="Финансовый план недоступен"
         />
       ) : null}
 
@@ -141,9 +141,9 @@ export function ProjectFinanceDetailsPage() {
         <EmptyState
           description={
             financeCapabilities.readOnlyReason ??
-            'Current user access for this finance plan is not available.'
+            'Текущему пользователю недоступен этот финансовый план.'
           }
-          title="Finance access is denied"
+          title="Нет доступа к финансовому плану"
         />
       ) : null}
 
@@ -161,46 +161,46 @@ export function ProjectFinanceDetailsPage() {
                   startIcon={<EditOutlinedIcon />}
                   variant="outlined"
                 >
-                  {isEditFormOpen ? 'Hide form' : 'Edit'}
+                  {isEditFormOpen ? 'Скрыть форму' : 'Редактировать'}
                 </Button>
               ) : undefined
             }
-            subtitle="Core metadata and backend-driven state for this project finance."
-            title="Project finance overview"
+            subtitle="Основные сведения и текущее состояние финансового плана."
+            title="Общая информация"
           >
             <Stack spacing={3}>
               <Stack divider={<Divider flexItem />} spacing={2.5}>
-                <ProjectFinanceDetailRow label="Name" value={projectFinance.name} />
+                <ProjectFinanceDetailRow label="Название" value={projectFinance.name} />
                 <ProjectFinanceDetailRow
-                  label="External project ID"
+                  label="ID проекта во внешней системе"
                   value={projectFinance.externalProjectId}
                 />
                 <ProjectFinanceDetailRow
-                  label="Description"
-                  value={projectFinance.description ?? 'No description'}
+                  label="Описание"
+                  value={projectFinance.description ?? 'Описание не указано'}
                 />
                 <ProjectFinanceDetailRow
-                  label="State"
+                  label="Состояние"
                   value={<FinanceStatusChip value={projectFinance.state} />}
                 />
                 <ProjectFinanceDetailRow
-                  label="Version"
+                  label="Версия"
                   value={String(projectFinance.version)}
                 />
                 <ProjectFinanceDetailRow
-                  label="Created at"
+                  label="Создан"
                   value={formatDateTime(projectFinance.createdAt)}
                 />
                 <ProjectFinanceDetailRow
-                  label="Updated at"
+                  label="Обновлён"
                   value={formatDateTime(projectFinance.updatedAt)}
                 />
                 <ProjectFinanceDetailRow
-                  label="Archived at"
+                  label="Архивирован"
                   value={formatOptionalDateTime(projectFinance.archivedAt)}
                 />
                 <ProjectFinanceDetailRow
-                  label="Deleted at"
+                  label="Удалён"
                   value={formatOptionalDateTime(projectFinance.deletedAt)}
                 />
               </Stack>

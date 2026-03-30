@@ -14,13 +14,13 @@ export interface MockAuthUser {
 export const MOCK_AUTH_USERS: readonly MockAuthUser[] = [
   {
     id: 'viewer-1',
-    label: 'Demo Viewer',
-    description: 'Read-only demo access through the current backend bridge.',
+    label: 'Демо наблюдатель',
+    description: 'Может только просматривать уже созданные финансовые планы.',
   },
   {
     id: 'editor-1',
-    label: 'Demo Editor',
-    description: 'Edit demo access through the current backend bridge.',
+    label: 'Демо редактор',
+    description: 'Может создавать и редактировать данные в MVP-сценарии.',
   },
 ]
 
@@ -87,7 +87,7 @@ export function loginMockAuthUser(userId: string): MockAuthUser {
   const user = findMockAuthUserById(userId)
 
   if (user === null) {
-    throw new Error(`Mock auth user "${userId}" is not configured.`)
+    throw new Error(`Пользователь демо-входа "${userId}" не настроен.`)
   }
 
   if (readStoredMockUserId() !== user.id) {

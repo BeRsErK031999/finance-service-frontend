@@ -77,7 +77,7 @@ export function ProjectFinanceMembersBlock({
   const handleRemoveMember = async (member: ProjectFinanceMember) => {
     if (
       !window.confirm(
-        `Remove member "${getMemberPrimaryLabel(member)}" from this project finance?`,
+        `Убрать участника "${getMemberPrimaryLabel(member)}" из этого финансового плана?`,
       )
     ) {
       return
@@ -99,17 +99,17 @@ export function ProjectFinanceMembersBlock({
     <SectionCard
       action={
         canManageMembers ? (
-          <Button
-            onClick={() => setIsCreateFormOpen((current) => !current)}
-            startIcon={<AddRoundedIcon />}
-            variant="contained"
-          >
-            {isCreateFormOpen ? 'Hide form' : 'Add member'}
+            <Button
+              onClick={() => setIsCreateFormOpen((current) => !current)}
+              startIcon={<AddRoundedIcon />}
+              variant="contained"
+            >
+            {isCreateFormOpen ? 'Скрыть форму' : 'Добавить участника'}
           </Button>
         ) : undefined
       }
-      subtitle="Review active finance memberships for this ProjectFinance and adjust local VIEW or EDIT access when your current membership allows it."
-      title="Project finance members"
+      subtitle="Участники этого финансового плана и их уровни доступа."
+      title="Участники"
     >
       <Stack spacing={3}>
         {canManageMembers ? (
@@ -121,14 +121,14 @@ export function ProjectFinanceMembersBlock({
         {actionError ? (
           <ErrorState
             description={actionError}
-            title="Failed to update project finance members"
+            title="Не удалось обновить участников"
           />
         ) : null}
 
         {projectFinanceMembersQuery.isPending ? (
           <LoadingState
-            description="Loading project finance members from the backend."
-            title="Loading members"
+            description="Загружаем участников финансового плана."
+            title="Загружаем участников"
           />
         ) : null}
 
@@ -139,11 +139,11 @@ export function ProjectFinanceMembersBlock({
                 onClick={() => void projectFinanceMembersQuery.refetch()}
                 variant="contained"
               >
-                Retry
+                Повторить
               </Button>
             }
             description={projectFinanceMembersQuery.error.message}
-            title="Failed to load members"
+            title="Не удалось загрузить участников"
           />
         ) : null}
 
@@ -158,16 +158,16 @@ export function ProjectFinanceMembersBlock({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add member
+                  Добавить участника
                 </Button>
               ) : undefined
             }
             description={
               canManageMembers
-                ? 'No members have been assigned to this project finance yet.'
-                : 'No members are available for viewing in this project finance yet.'
+                ? 'В этот финансовый план ещё никто не добавлен.'
+                : 'Список участников этого финансового плана пока пуст.'
             }
-            title="No members yet"
+            title="Пока нет участников"
           />
         ) : null}
 
@@ -247,11 +247,11 @@ function ProjectFinanceMemberListItem({
             sx={{ flexWrap: 'wrap' }}
           >
             <ProjectFinanceMemberMetaItem
-              label="Created"
+              label="Добавлен"
               value={formatDateTime(member.createdAt)}
             />
             <ProjectFinanceMemberMetaItem
-              label="Updated"
+              label="Обновлён"
               value={formatDateTime(member.updatedAt)}
             />
           </Stack>
@@ -261,7 +261,7 @@ function ProjectFinanceMemberListItem({
           <Stack alignItems={{ xs: 'stretch', lg: 'flex-end' }} spacing={1.5}>
             <TextField
               disabled={isBusy}
-              label="Access level"
+              label="Уровень доступа"
               onChange={(event) =>
                 setDraftAccessLevel(
                   event.target.value as ProjectFinanceMemberAccessLevel,
@@ -285,7 +285,7 @@ function ProjectFinanceMemberListItem({
                 onClick={() => void onUpdateAccess(member.id, draftAccessLevel)}
                 variant="outlined"
               >
-                {isUpdating ? 'Updating...' : 'Update access'}
+                {isUpdating ? 'Сохраняем...' : 'Сохранить доступ'}
               </Button>
 
               <Button
@@ -294,7 +294,7 @@ function ProjectFinanceMemberListItem({
                 onClick={() => void onRemove(member)}
                 variant="outlined"
               >
-                {isRemoving ? 'Removing...' : 'Remove'}
+                {isRemoving ? 'Убираем...' : 'Убрать'}
               </Button>
             </Stack>
           </Stack>
@@ -337,7 +337,7 @@ function ProjectFinanceMemberMetaItem({
 }
 
 function getAccessLevelLabel(accessLevel: ProjectFinanceMemberAccessLevel) {
-  return accessLevel === 'EDIT' ? 'Edit access' : 'View access'
+  return accessLevel === 'EDIT' ? 'Редактирование' : 'Просмотр'
 }
 
 function getMemberPrimaryLabel(member: ProjectFinanceMember) {

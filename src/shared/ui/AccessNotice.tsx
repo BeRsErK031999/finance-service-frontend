@@ -7,7 +7,7 @@ interface AccessNoticeProps {
 export function AccessNotice({ message }: AccessNoticeProps) {
   return (
     <Alert severity="info" variant="outlined">
-      <AlertTitle>Read-only access</AlertTitle>
+      <AlertTitle>Режим просмотра</AlertTitle>
       {message}
     </Alert>
   )

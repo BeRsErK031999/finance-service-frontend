@@ -9,8 +9,8 @@ export const editProjectFinanceFormSchema = z.object({
   externalProjectId: z
     .string()
     .trim()
-    .min(1, 'External project ID is required'),
-  name: z.string().trim().min(1, 'Finance name is required'),
+    .min(1, 'Укажите ID проекта во внешней системе'),
+  name: z.string().trim().min(1, 'Укажите название финансового плана'),
   description: z.string().trim(),
 })
 

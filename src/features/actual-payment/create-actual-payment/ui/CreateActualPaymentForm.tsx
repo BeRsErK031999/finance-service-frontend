@@ -109,10 +109,9 @@ export function CreateActualPaymentForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">New actual payment</Typography>
+          <Typography variant="h6">Новое фактическое поступление</Typography>
           <Typography color="text.secondary">
-            Register the factual incoming movement for planned payment "
-            {plannedPaymentName}".
+            Зафиксируйте фактическое поступление для записи "{plannedPaymentName}".
           </Typography>
         </Stack>
 
@@ -127,8 +126,8 @@ export function CreateActualPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.amount)}
           fullWidth
-          helperText={errors.amount?.message ?? 'Use the backend decimal format'}
-          label="Amount"
+          helperText={errors.amount?.message ?? 'Введите сумму в формате 150000.00'}
+          label="Сумма"
         />
 
         <TextField
@@ -136,8 +135,8 @@ export function CreateActualPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.actualDate)}
           fullWidth
-          helperText={errors.actualDate?.message}
-          label="Actual date"
+          helperText={errors.actualDate?.message ?? 'Дата фактического поступления'}
+          label="Фактическая дата"
           slotProps={{
             inputLabel: {
               shrink: true,
@@ -151,15 +150,15 @@ export function CreateActualPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.comment)}
           fullWidth
-          helperText={errors.comment?.message ?? 'Optional comment'}
-          label="Comment"
+          helperText={errors.comment?.message ?? 'Необязательно. Можно добавить пояснение к поступлению.'}
+          label="Комментарий"
           minRows={3}
           multiline
         />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create actual payment'}
+            {isSubmitting ? 'Создаём...' : 'Создать фактическое поступление'}
           </Button>
         </Stack>
       </Stack>

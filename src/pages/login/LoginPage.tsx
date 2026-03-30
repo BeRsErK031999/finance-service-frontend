@@ -52,19 +52,19 @@ export function LoginPage() {
       <Box sx={{ mx: 'auto', width: '100%', maxWidth: 760 }}>
         <Stack spacing={3}>
           <PageTitle
-            subtitle="Temporary mock login until the real auth-service integration is implemented."
-            title="Demo sign-in"
+            subtitle="Временный демо-вход, пока не подключена настоящая авторизация."
+            title="Вход в MVP"
           />
 
           <Alert icon={<InfoOutlinedIcon fontSize="inherit" />} severity="info">
-            This page does not perform real authentication. It stores a demo identity in
-            local storage and forwards it to the backend through the existing
-            `x-user-id` bridge.
+            Эта страница не выполняет настоящую авторизацию. Она сохраняет выбранную
+            демо-роль в local storage и передаёт её в backend через текущий заголовок
+            `x-user-id`.
           </Alert>
 
           <SectionCard
-            subtitle="Choose which demo finance access you want to use for this browser session."
-            title="Select mock identity"
+            subtitle="Выберите роль, под которой хотите пройти локальный MVP-сценарий в этом браузере."
+            title="Выбор демо-роли"
           >
             <Stack spacing={2}>
               {availableUsers.map((user) => {
@@ -93,12 +93,12 @@ export function LoginPage() {
                             {user.description}
                           </Typography>
                           <Typography color="text.secondary" variant="caption">
-                            Backend user ID: {user.id}
+                            Идентификатор пользователя для backend: {user.id}
                           </Typography>
                         </Stack>
                         <Chip
                           color={isSelected ? 'primary' : 'default'}
-                          label={isSelected ? 'Selected' : 'Click to select'}
+                          label={isSelected ? 'Выбрано' : 'Нажмите, чтобы выбрать'}
                           size="small"
                           variant={isSelected ? 'filled' : 'outlined'}
                         />
@@ -115,7 +115,7 @@ export function LoginPage() {
                 size="large"
                 variant="contained"
               >
-                {selectedUser ? `Continue as ${selectedUser.label}` : 'Choose a demo user'}
+                {selectedUser ? `Продолжить как ${selectedUser.label}` : 'Выберите демо-пользователя'}
               </Button>
             </Stack>
           </SectionCard>

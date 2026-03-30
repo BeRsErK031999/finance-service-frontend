@@ -10,8 +10,8 @@ export function NotFoundPage() {
   return (
     <PageContainer>
       <PageTitle
-        subtitle="The requested page does not exist in the current frontend shell."
-        title="Page not found"
+        subtitle="Эта страница отсутствует в текущем MVP-интерфейсе."
+        title="Страница не найдена"
       />
       <EmptyState
         action={
@@ -21,11 +21,11 @@ export function NotFoundPage() {
             to="/project-finances"
             variant="contained"
           >
-            Go to project finances
+            К списку финансовых планов
           </Button>
         }
-        description="Use the main project finances route as the current application entry point."
-        title="Nothing to render here"
+        description="Откройте основной список финансовых планов и продолжите работу оттуда."
+        title="Здесь пока ничего нет"
       />
     </PageContainer>
   )

@@ -4,7 +4,7 @@ import type { CreateProjectFinanceMemberRequest } from '../../../../entities/pro
 import { PROJECT_FINANCE_MEMBER_ACCESS_LEVELS } from '../../../../entities/project-finance-member/model/types'
 
 export const createProjectFinanceMemberFormSchema = z.object({
-  userId: z.string().trim().min(1, 'Member is required'),
+  userId: z.string().trim().min(1, 'Выберите участника'),
   accessLevel: z.enum(PROJECT_FINANCE_MEMBER_ACCESS_LEVELS),
 })
 

@@ -28,10 +28,10 @@ export function ProjectFinanceSummaryBlock({
   const actualPaymentsQuery = useActualPayments({ projectFinanceId })
   const actualCostsQuery = useActualCosts({ projectFinanceId })
 
-  const plannedPayments = plannedPaymentsQuery.data?.items ?? []
-  const plannedCosts = plannedCostsQuery.data?.items ?? []
-  const actualPayments = actualPaymentsQuery.data?.items ?? []
-  const actualCosts = actualCostsQuery.data?.items ?? []
+  const plannedPayments = (plannedPaymentsQuery.data?.items ?? []).filter(isActiveRecord)
+  const plannedCosts = (plannedCostsQuery.data?.items ?? []).filter(isActiveRecord)
+  const actualPayments = (actualPaymentsQuery.data?.items ?? []).filter(isActiveRecord)
+  const actualCosts = (actualCostsQuery.data?.items ?? []).filter(isActiveRecord)
 
   const hasError =
     plannedPaymentsQuery.isError ||
@@ -56,41 +56,41 @@ export function ProjectFinanceSummaryBlock({
 
   const metrics: SummaryMetric[] = [
     {
-      label: 'Total planned payments',
+      label: 'Плановые поступления',
       secondaryLabel: formatRecordCount(plannedPayments.length),
       value: plannedPaymentsTotal,
     },
     {
-      label: 'Total planned costs',
+      label: 'Плановые расходы',
       secondaryLabel: formatRecordCount(plannedCosts.length),
       value: plannedCostsTotal,
     },
     {
-      label: 'Total actual payments',
+      label: 'Фактические поступления',
       secondaryLabel: formatRecordCount(actualPayments.length),
       value: actualPaymentsTotal,
     },
     {
-      label: 'Total actual costs',
+      label: 'Фактические расходы',
       secondaryLabel: formatRecordCount(actualCosts.length),
       value: actualCostsTotal,
     },
     {
-      label: 'Planned balance',
-      secondaryLabel: 'Planned payments minus planned costs',
+      label: 'Плановый баланс',
+      secondaryLabel: 'Плановые поступления минус плановые расходы',
       value: plannedPaymentsTotal - plannedCostsTotal,
     },
     {
-      label: 'Actual balance',
-      secondaryLabel: 'Actual payments minus actual costs',
+      label: 'Фактический баланс',
+      secondaryLabel: 'Фактические поступления минус фактические расходы',
       value: actualPaymentsTotal - actualCostsTotal,
     },
   ]
 
   return (
     <SectionCard
-      subtitle="Aggregated from the planned and actual movement lists returned by the backend for this project finance."
-      title="Project finance summary"
+      subtitle="Сводка по всем плановым и фактическим движениям в этом финансовом плане."
+      title="Итоги по проекту"
     >
       <Stack spacing={3}>
         {hasError ? (
@@ -102,7 +102,7 @@ export function ProjectFinanceSummaryBlock({
                 actualPaymentsQuery.refetch,
                 actualCostsQuery.refetch,
               ])} variant="contained">
-                Retry
+                Повторить
               </Button>
             }
             description={buildSummaryErrorDescription({
@@ -119,21 +119,21 @@ export function ProjectFinanceSummaryBlock({
                 ? plannedPaymentsQuery.error.message
                 : null,
             })}
-            title="Failed to load summary"
+            title="Не удалось загрузить сводку"
           />
         ) : null}
 
         {!hasError && isPending ? (
           <LoadingState
-            description="Loading planned and actual totals from the backend lists."
-            title="Loading summary"
+            description="Собираем итоговые суммы по плановым и фактическим движениям."
+            title="Загружаем сводку"
           />
         ) : null}
 
         {!hasError && !isPending && totalItemCount === 0 ? (
           <EmptyState
-            description="No planned or actual finance movements are available for this project finance yet."
-            title="Summary is empty"
+            description="Для этого финансового плана пока нет ни плановых, ни фактических движений."
+            title="Сводка пока пустая"
           />
         ) : null}
 
@@ -186,7 +186,7 @@ function SummaryMetricCard({ metric }: { metric: SummaryMetric }) {
 }
 
 function getMetricValueColor(metric: SummaryMetric) {
-  if (!metric.label.includes('balance')) {
+  if (!metric.label.includes('баланс')) {
     return 'text.primary'
   }
 
@@ -205,6 +205,10 @@ function sumAmounts(items: Array<{ amount: string }>) {
   return items.reduce((total, item) => total + toNumericAmount(item.amount), 0)
 }
 
+function isActiveRecord<T extends { state: string }>(item: T) {
+  return item.state === 'ACTIVE'
+}
+
 function toNumericAmount(value: string) {
   const numericValue = Number(value)
 
@@ -212,7 +216,11 @@ function toNumericAmount(value: string) {
 }
 
 function formatRecordCount(count: number) {
-  return count === 1 ? '1 record' : `${count} records`
+  if (count === 1) {
+    return '1 запись'
+  }
+
+  return `${count} записей`
 }
 
 function buildSummaryErrorDescription({
@@ -227,19 +235,19 @@ function buildSummaryErrorDescription({
   actualCostsMessage: string | null
 }) {
   const failedSources = [
-    plannedPaymentsMessage ? 'planned payments' : null,
-    plannedCostsMessage ? 'planned costs' : null,
-    actualPaymentsMessage ? 'actual payments' : null,
-    actualCostsMessage ? 'actual costs' : null,
+    plannedPaymentsMessage ? 'плановые поступления' : null,
+    plannedCostsMessage ? 'плановые расходы' : null,
+    actualPaymentsMessage ? 'фактические поступления' : null,
+    actualCostsMessage ? 'фактические расходы' : null,
   ].filter((value): value is string => value !== null)
   const primaryMessage =
     plannedPaymentsMessage ??
     plannedCostsMessage ??
     actualPaymentsMessage ??
     actualCostsMessage ??
-    'Unknown summary error'
+    'Неизвестная ошибка сводки'
 
-  return `Summary is unavailable because ${joinLabels(failedSources)} failed to load. ${primaryMessage}`
+  return `Сводка недоступна, потому что не удалось загрузить: ${joinLabels(failedSources)}. ${primaryMessage}`
 }
 
 function joinLabels(labels: string[]) {
@@ -248,10 +256,10 @@ function joinLabels(labels: string[]) {
   }
 
   if (labels.length === 2) {
-    return `${labels[0]} and ${labels[1]}`
+    return `${labels[0]} и ${labels[1]}`
   }
 
-  return `${labels.slice(0, -1).join(', ')}, and ${labels.at(-1)}`
+  return `${labels.slice(0, -1).join(', ')} и ${labels.at(-1)}`
 }
 
 async function retryAllQueries(

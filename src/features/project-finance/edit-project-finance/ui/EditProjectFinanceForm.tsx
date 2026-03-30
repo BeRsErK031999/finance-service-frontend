@@ -25,7 +25,12 @@ const FIELD_NAMES = new Set<keyof EditProjectFinanceFormValues>([
 ])
 
 const CONFLICT_MESSAGE =
-  'This project finance was changed after you opened the form. Refresh the data and try again.'
+  'Финансовый план уже изменился после открытия формы. Обновите данные и повторите попытку.'
+const EXTERNAL_PROJECT_ID_HELPER_TEXT =
+  'Укажите ID проекта во внешней системе. Он должен существовать в финансовом сервисе.'
+const FINANCE_NAME_HELPER_TEXT =
+  'Это название отображается в списке и на странице финансового плана.'
+const DESCRIPTION_HELPER_TEXT = 'Необязательно. Можно оставить пояснение для команды.'
 
 interface EditProjectFinanceFormProps {
   projectFinance: ProjectFinance
@@ -106,10 +111,9 @@ export function EditProjectFinanceForm({
       sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}
     >
       <Stack spacing={0.5}>
-        <Typography variant="h6">Edit project finance</Typography>
+        <Typography variant="h6">Редактирование финансового плана</Typography>
         <Typography color="text.secondary">
-          Update the editable backend fields and send the current version for
-          optimistic concurrency.
+          Измените доступные поля и сохраните актуальную версию записи.
         </Typography>
       </Stack>
 
@@ -124,8 +128,8 @@ export function EditProjectFinanceForm({
         disabled={isSubmitting}
         error={Boolean(errors.externalProjectId)}
         fullWidth
-        helperText={errors.externalProjectId?.message}
-        label="External project ID"
+        helperText={errors.externalProjectId?.message ?? EXTERNAL_PROJECT_ID_HELPER_TEXT}
+        label="ID проекта во внешней системе"
       />
 
       <TextField
@@ -133,8 +137,8 @@ export function EditProjectFinanceForm({
         disabled={isSubmitting}
         error={Boolean(errors.name)}
         fullWidth
-        helperText={errors.name?.message}
-        label="Finance name"
+        helperText={errors.name?.message ?? FINANCE_NAME_HELPER_TEXT}
+        label="Название финансового плана"
       />
 
       <TextField
@@ -142,8 +146,8 @@ export function EditProjectFinanceForm({
         disabled={isSubmitting}
         error={Boolean(errors.description)}
         fullWidth
-        helperText={errors.description?.message ?? 'Optional'}
-        label="Description"
+        helperText={errors.description?.message ?? DESCRIPTION_HELPER_TEXT}
+        label="Описание"
         minRows={4}
         multiline
       />
@@ -155,10 +159,10 @@ export function EditProjectFinanceForm({
           type="button"
           variant="text"
         >
-          Cancel
+          Отмена
         </Button>
         <Button disabled={isSubmitting} type="submit" variant="contained">
-          {isSubmitting ? 'Saving...' : 'Save changes'}
+          {isSubmitting ? 'Сохраняем...' : 'Сохранить изменения'}
         </Button>
       </Stack>
     </Stack>

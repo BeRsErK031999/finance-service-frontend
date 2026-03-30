@@ -7,7 +7,7 @@ import { PageContainer } from '../../shared/ui/PageContainer'
 export function RouteErrorPage() {
   const error = useRouteError()
 
-  let description = 'Unexpected route error. Try to refresh the page.'
+  let description = 'Не удалось открыть страницу. Попробуйте обновить её.'
 
   if (isRouteErrorResponse(error)) {
     description = `${error.status} ${error.statusText}`
@@ -20,11 +20,11 @@ export function RouteErrorPage() {
       <ErrorState
         action={
           <Button href="/project-finances" variant="contained">
-            Back to project finances
+            К финансовым планам
           </Button>
         }
         description={description}
-        title="Page failed to load"
+        title="Ошибка загрузки страницы"
       />
     </PageContainer>
   )

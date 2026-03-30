@@ -73,10 +73,10 @@ export function AppShell() {
                   to="/project-finances"
                   variant="h6"
                 >
-                  Finance Service
+                  Финансовый сервис
                 </Typography>
                 <Typography color="text.secondary" variant="body2">
-                  Expandable frontend shell
+                  MVP интерфейс финансовых планов
                 </Typography>
               </Box>
             </Stack>
@@ -87,12 +87,12 @@ export function AppShell() {
               spacing={1.5}
             >
               <Button component={RouterLink} to="/project-finances" variant="outlined">
-                Project finances
+                Финансовые планы
               </Button>
 
               <Stack alignItems="flex-end" spacing={0.25} sx={{ display: { xs: 'none', lg: 'flex' } }}>
                 <Typography color="text.secondary" variant="caption">
-                  Demo session
+                  Демо-сессия
                 </Typography>
                 <Typography color="text.primary" variant="body2">
                   {currentUser.label}
@@ -115,7 +115,7 @@ export function AppShell() {
               </FormControl>
 
               <Button onClick={handleLogout} variant="text">
-                Logout
+                Выйти
               </Button>
             </Stack>
           </Stack>
@@ -137,7 +137,7 @@ export function AppShell() {
       >
         <Container>
           <Typography color="text.secondary" variant="body2">
-            API base URL: {appConfig.apiBaseUrl}
+            Адрес API: {appConfig.apiBaseUrl}
           </Typography>
         </Container>
       </Box>

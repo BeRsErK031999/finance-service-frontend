@@ -48,7 +48,7 @@ export function SectionFinancePlanBlock({
   const handleArchive = async (sectionFinancePlan: SectionFinancePlan) => {
     if (
       !window.confirm(
-        `Archive section finance plan "${sectionFinancePlan.name}"?`,
+        `Отправить в архив блок раздела "${sectionFinancePlan.name}"?`,
       )
     ) {
       return
@@ -70,17 +70,17 @@ export function SectionFinancePlanBlock({
     <SectionCard
       action={
         canCreateSectionFinancePlan ? (
-          <Button
-            onClick={() => setIsCreateFormOpen((current) => !current)}
-            startIcon={<AddRoundedIcon />}
-            variant="contained"
-          >
-            {isCreateFormOpen ? 'Hide form' : 'Add section'}
+            <Button
+              onClick={() => setIsCreateFormOpen((current) => !current)}
+              startIcon={<AddRoundedIcon />}
+              variant="contained"
+            >
+            {isCreateFormOpen ? 'Скрыть форму' : 'Добавить блок раздела'}
           </Button>
         ) : undefined
       }
-      subtitle="Manage the section-level finance plan blocks linked to this project finance."
-      title="Section finance plans"
+      subtitle="Блоки финансового плана по разделам, связанным с этим проектом."
+      title="Финансы по разделам"
     >
       <Stack spacing={3}>
         {canCreateSectionFinancePlan ? (
@@ -92,14 +92,14 @@ export function SectionFinancePlanBlock({
         {archiveError ? (
           <ErrorState
             description={archiveError}
-            title="Failed to archive section finance plan"
+            title="Не удалось отправить блок раздела в архив"
           />
         ) : null}
 
         {sectionFinancePlansQuery.isPending ? (
           <LoadingState
-            description="Loading section finance plans from the backend."
-            title="Loading sections"
+            description="Загружаем блоки разделов."
+            title="Загружаем разделы"
           />
         ) : null}
 
@@ -110,11 +110,11 @@ export function SectionFinancePlanBlock({
                 onClick={() => void sectionFinancePlansQuery.refetch()}
                 variant="contained"
               >
-                Retry
+                Повторить
               </Button>
             }
             description={sectionFinancePlansQuery.error.message}
-            title="Failed to load sections"
+            title="Не удалось загрузить разделы"
           />
         ) : null}
 
@@ -129,16 +129,16 @@ export function SectionFinancePlanBlock({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add section
+                  Добавить блок раздела
                 </Button>
               ) : undefined
             }
             description={
               canCreateSectionFinancePlan
-                ? 'Create the first section finance plan for this project finance.'
-                : 'No section finance plans are available for viewing in this project finance yet.'
+                ? 'Добавьте первый финансовый блок раздела для этого проекта.'
+                : 'Для этого проекта пока нет доступных блоков разделов.'
             }
-            title="No sections yet"
+            title="Пока нет блоков разделов"
           />
         ) : null}
 
@@ -203,10 +203,10 @@ function SectionFinancePlanListItem({
             </Stack>
 
             <Typography color="text.secondary" variant="body2">
-              External section ID: {sectionFinancePlan.externalSectionId}
+              ID раздела во внешней системе: {sectionFinancePlan.externalSectionId}
             </Typography>
             <Typography color="text.secondary" variant="body2">
-              {sectionFinancePlan.description ?? 'No description'}
+              {sectionFinancePlan.description ?? 'Описание не указано'}
             </Typography>
 
             <Stack
@@ -215,19 +215,19 @@ function SectionFinancePlanListItem({
               sx={{ flexWrap: 'wrap' }}
             >
               <SectionFinancePlanMetaItem
-                label="Version"
+                label="Версия"
                 value={String(sectionFinancePlan.version)}
               />
               <SectionFinancePlanMetaItem
-                label="Created"
+                label="Создан"
                 value={formatDateTime(sectionFinancePlan.createdAt)}
               />
               <SectionFinancePlanMetaItem
-                label="Updated"
+                label="Обновлён"
                 value={formatDateTime(sectionFinancePlan.updatedAt)}
               />
               <SectionFinancePlanMetaItem
-                label="Archived"
+                label="Архивирован"
                 value={formatOptionalDateTime(sectionFinancePlan.archivedAt)}
               />
             </Stack>
@@ -242,7 +242,7 @@ function SectionFinancePlanListItem({
                   startIcon={<EditOutlinedIcon />}
                   variant="outlined"
                 >
-                  {isEditFormVisible ? 'Hide form' : 'Edit'}
+                  {isEditFormVisible ? 'Скрыть форму' : 'Редактировать'}
                 </Button>
               ) : null}
               {canArchiveSectionFinancePlan ? (

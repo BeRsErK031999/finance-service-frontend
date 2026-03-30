@@ -11,17 +11,17 @@ const dateInputPattern = /^\d{4}-\d{2}-\d{2}$/
 
 export const editPlannedCostFormSchema = z
   .object({
-    name: z.string().trim().min(1, 'Name is required'),
+    name: z.string().trim().min(1, 'Укажите название расхода'),
     amount: z
       .string()
       .trim()
-      .min(1, 'Amount is required')
-      .regex(amountPattern, 'Enter a valid amount with up to 2 decimals'),
+      .min(1, 'Укажите сумму')
+      .regex(amountPattern, 'Введите сумму в формате 12345.67'),
     conditionSource: z.enum(PLANNED_COST_CONDITION_SOURCES),
     plannedDate: z.string().trim(),
     sectionFinancePlanIds: z
       .array(z.string().uuid())
-      .min(1, 'Select at least one linked section'),
+      .min(1, 'Выберите хотя бы один связанный блок раздела'),
     projectEventIds: z.array(z.string().trim().min(1)),
     sectionEventIds: z.array(z.string().trim().min(1)),
   })
@@ -33,7 +33,7 @@ export const editPlannedCostFormSchema = z
       if (value.plannedDate.length === 0) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Planned date is required when condition source is DATE',
+          message: 'Укажите плановую дату для режима "По дате"',
           path: ['plannedDate'],
         })
 
@@ -43,7 +43,7 @@ export const editPlannedCostFormSchema = z
       if (!dateInputPattern.test(value.plannedDate)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Enter a valid planned date',
+          message: 'Укажите корректную плановую дату',
           path: ['plannedDate'],
         })
       }
@@ -51,8 +51,7 @@ export const editPlannedCostFormSchema = z
       if (totalEventCount > 0) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            'Project and section events must be empty when condition source is DATE',
+          message: 'Для режима "По дате" списки событий должны быть пустыми',
           path: ['projectEventIds'],
         })
       }
@@ -63,7 +62,7 @@ export const editPlannedCostFormSchema = z
     if (value.plannedDate.length > 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Planned date must be empty when condition source is EVENTS',
+        message: 'Для режима "По событиям" поле даты должно быть пустым',
         path: ['plannedDate'],
       })
     }
@@ -71,8 +70,7 @@ export const editPlannedCostFormSchema = z
     if (totalEventCount === 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message:
-          'Add at least one project or section event when condition source is EVENTS',
+        message: 'Добавьте хотя бы одно проектное событие или событие раздела',
         path: ['projectEventIds'],
       })
     }

@@ -28,6 +28,13 @@ const FIELD_NAMES = new Set<keyof CreateProjectFinanceFormValues>([
   'name',
 ])
 
+const EXTERNAL_PROJECT_ID_HELPER_TEXT =
+  'Укажите ID проекта из внешнего сервиса проектов. Финансовый план можно создать только для проекта, который уже существует в системе.'
+const FINANCE_NAME_HELPER_TEXT =
+  'Это название будет видно пользователям внутри финансового сервиса.'
+const DESCRIPTION_HELPER_TEXT = 'Необязательно. Кратко опишите назначение плана.'
+const DEMO_EXTERNAL_PROJECT_ID = 'demo-project-1'
+
 export function CreateProjectFinanceForm() {
   const navigate = useNavigate()
   const createProjectFinanceMutation = useCreateProjectFinanceMutation()
@@ -84,10 +91,17 @@ export function CreateProjectFinanceForm() {
 
   return (
     <SectionCard
-      subtitle="Backend requires only external project ID, finance name and optional description."
-      title="Basic information"
+      subtitle="Заполните базовые данные для нового финансового плана проекта."
+      title="Основная информация"
     >
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
+        {import.meta.env.DEV ? (
+          <Alert severity="info" variant="outlined">
+            Для локального MVP можно использовать внешний ID проекта{' '}
+            <strong>{DEMO_EXTERNAL_PROJECT_ID}</strong>.
+          </Alert>
+        ) : null}
+
         {formError ? (
           <Alert severity="error" variant="outlined">
             {formError}
@@ -99,8 +113,8 @@ export function CreateProjectFinanceForm() {
           disabled={isSubmitting}
           error={Boolean(errors.externalProjectId)}
           fullWidth
-          helperText={errors.externalProjectId?.message}
-          label="External project ID"
+          helperText={errors.externalProjectId?.message ?? EXTERNAL_PROJECT_ID_HELPER_TEXT}
+          label="ID проекта во внешней системе"
         />
 
         <TextField
@@ -108,8 +122,8 @@ export function CreateProjectFinanceForm() {
           disabled={isSubmitting}
           error={Boolean(errors.name)}
           fullWidth
-          helperText={errors.name?.message}
-          label="Finance name"
+          helperText={errors.name?.message ?? FINANCE_NAME_HELPER_TEXT}
+          label="Название финансового плана"
         />
 
         <TextField
@@ -117,15 +131,15 @@ export function CreateProjectFinanceForm() {
           disabled={isSubmitting}
           error={Boolean(errors.description)}
           fullWidth
-          helperText={errors.description?.message ?? 'Optional'}
-          label="Description"
+          helperText={errors.description?.message ?? DESCRIPTION_HELPER_TEXT}
+          label="Описание"
           minRows={4}
           multiline
         />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create project finance'}
+            {isSubmitting ? 'Создаём...' : 'Создать финансовый план'}
           </Button>
         </Stack>
       </Stack>

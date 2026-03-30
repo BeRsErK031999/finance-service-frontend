@@ -25,7 +25,7 @@ const FIELD_NAMES = new Set<keyof EditSectionFinancePlanFormValues>([
 ])
 
 const CONFLICT_MESSAGE =
-  'This section finance plan was changed after you opened the form. Refresh the section data and try again.'
+  'Финансовый блок раздела уже изменился после открытия формы. Обновите данные и повторите попытку.'
 
 interface EditSectionFinancePlanFormProps {
   sectionFinancePlan: SectionFinancePlan
@@ -112,10 +112,9 @@ export function EditSectionFinancePlanForm({
       sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}
     >
       <Stack spacing={0.5}>
-        <Typography variant="h6">Edit section finance plan</Typography>
+        <Typography variant="h6">Редактирование блока раздела</Typography>
         <Typography color="text.secondary">
-          Keep the section linked to an active backend section and send the
-          current version with each update.
+          Сохраняйте связь с существующим разделом и редактируйте актуальную версию записи.
         </Typography>
       </Stack>
 
@@ -130,8 +129,11 @@ export function EditSectionFinancePlanForm({
         disabled={isSubmitting}
         error={Boolean(errors.externalSectionId)}
         fullWidth
-        helperText={errors.externalSectionId?.message}
-        label="External section ID"
+        helperText={
+          errors.externalSectionId?.message ??
+          'ID раздела должен существовать во внешней системе и быть доступен в финансовом сервисе.'
+        }
+        label="ID раздела во внешней системе"
       />
 
       <TextField
@@ -139,8 +141,8 @@ export function EditSectionFinancePlanForm({
         disabled={isSubmitting}
         error={Boolean(errors.name)}
         fullWidth
-        helperText={errors.name?.message}
-        label="Section name"
+        helperText={errors.name?.message ?? 'Это название будет видно пользователям в интерфейсе.'}
+        label="Название блока раздела"
       />
 
       <TextField
@@ -148,8 +150,8 @@ export function EditSectionFinancePlanForm({
         disabled={isSubmitting}
         error={Boolean(errors.description)}
         fullWidth
-        helperText={errors.description?.message ?? 'Optional'}
-        label="Description"
+        helperText={errors.description?.message ?? 'Необязательно. Можно добавить пояснение.'}
+        label="Описание"
         minRows={4}
         multiline
       />
@@ -161,10 +163,10 @@ export function EditSectionFinancePlanForm({
           type="button"
           variant="text"
         >
-          Cancel
+          Отмена
         </Button>
         <Button disabled={isSubmitting} type="submit" variant="contained">
-          {isSubmitting ? 'Saving...' : 'Save changes'}
+          {isSubmitting ? 'Сохраняем...' : 'Сохранить изменения'}
         </Button>
       </Stack>
     </Stack>

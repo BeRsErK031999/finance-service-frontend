@@ -69,7 +69,7 @@ export function PlannedCostBlock({
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
 
   const handleArchive = async (plannedCost: PlannedCost) => {
-    if (!window.confirm(`Archive planned cost "${plannedCost.name}"?`)) {
+    if (!window.confirm(`Отправить в архив плановый расход "${plannedCost.name}"?`)) {
       return
     }
 
@@ -95,9 +95,9 @@ export function PlannedCostBlock({
           spacing={2}
         >
           <Stack spacing={0.5}>
-            <Typography variant="h6">Planned costs</Typography>
+            <Typography variant="h6">Плановые расходы</Typography>
             <Typography color="text.secondary">
-              Manage planned outgoing money movements linked to this section.
+              Здесь показаны ожидаемые расходы, связанные с этим разделом.
             </Typography>
           </Stack>
 
@@ -107,7 +107,7 @@ export function PlannedCostBlock({
               startIcon={<AddRoundedIcon />}
               variant="contained"
             >
-              {isCreateFormOpen ? 'Hide form' : 'Add cost'}
+              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить расход'}
             </Button>
           ) : null}
         </Stack>
@@ -125,14 +125,14 @@ export function PlannedCostBlock({
         {archiveError ? (
           <ErrorState
             description={archiveError}
-            title="Failed to archive planned cost"
+            title="Не удалось отправить плановый расход в архив"
           />
         ) : null}
 
         {plannedCostsQuery.isPending ? (
           <LoadingState
-            description="Loading planned costs for this project finance."
-            title="Loading planned costs"
+            description="Загружаем плановые расходы для этого финансового плана."
+            title="Загружаем плановые расходы"
           />
         ) : null}
 
@@ -140,11 +140,11 @@ export function PlannedCostBlock({
           <ErrorState
             action={
               <Button onClick={() => void plannedCostsQuery.refetch()} variant="contained">
-                Retry
+                Повторить
               </Button>
             }
             description={plannedCostsQuery.error.message}
-            title="Failed to load planned costs"
+            title="Не удалось загрузить плановые расходы"
           />
         ) : null}
 
@@ -159,16 +159,16 @@ export function PlannedCostBlock({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add cost
+                  Добавить расход
                 </Button>
               ) : undefined
             }
             description={
               canCreatePlannedCost
-                ? 'No planned costs are linked to this section yet. Create the first planned outgoing movement here.'
-                : 'No planned costs are linked to this section yet.'
+                ? 'Для этого раздела пока нет плановых расходов. Добавьте первый ожидаемый расход.'
+                : 'Для этого раздела пока нет плановых расходов.'
             }
-            title="No planned costs yet"
+            title="Плановых расходов пока нет"
           />
         ) : null}
 
@@ -256,27 +256,27 @@ function PlannedCostListItem({
             </Stack>
 
             <Typography color="text.secondary" variant="body2">
-              Amount: {formatAmount(plannedCost.amount)}
+              Сумма: {formatAmount(plannedCost.amount)}
             </Typography>
 
             {plannedCost.conditionSource === 'DATE' ? (
               <Typography color="text.secondary" variant="body2">
-                Planned date: {formatOptionalDate(plannedCost.plannedDate)}
+                Плановая дата: {formatOptionalDate(plannedCost.plannedDate)}
               </Typography>
             ) : (
               <Stack spacing={1}>
                 <Typography color="text.secondary" variant="body2">
-                  Condition: all selected project and section events must occur.
+                  Расход ожидается только после того, как произойдут все выбранные проектные события и события раздела.
                 </Typography>
                 {plannedCost.projectEventIds.length > 0 ? (
                   <IdentifierGroup
-                    label="Project events"
+                    label="Проектные события"
                     values={plannedCost.projectEventIds}
                   />
                 ) : null}
                 {plannedCost.sectionEventIds.length > 0 ? (
                   <IdentifierGroup
-                    label="Section events"
+                    label="События раздела"
                     values={plannedCost.sectionEventIds}
                   />
                 ) : null}
@@ -288,21 +288,21 @@ function PlannedCostListItem({
               spacing={2}
               sx={{ flexWrap: 'wrap' }}
             >
-              <MetaItem label="Version" value={String(plannedCost.version)} />
+              <MetaItem label="Версия" value={String(plannedCost.version)} />
               <MetaItem
-                label="Created"
+                label="Создано"
                 value={formatDateTime(plannedCost.createdAt)}
               />
               <MetaItem
-                label="Updated"
+                label="Обновлено"
                 value={formatDateTime(plannedCost.updatedAt)}
               />
               <MetaItem
-                label="Actual date"
+                label="Фактическая дата"
                 value={formatOptionalDate(plannedCost.actualDate)}
               />
               <MetaItem
-                label="Archived"
+                label="В архиве с"
                 value={formatOptionalDateTime(plannedCost.archivedAt)}
               />
             </Stack>
@@ -316,7 +316,7 @@ function PlannedCostListItem({
                   startIcon={<SyncAltRoundedIcon />}
                   variant="outlined"
                 >
-                  {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+                  {isStatusFormOpen ? 'Скрыть форму' : 'Изменить статус'}
                 </Button>
               ) : null}
               {canEditPlannedCost ? (
@@ -327,7 +327,7 @@ function PlannedCostListItem({
                     startIcon={<EditOutlinedIcon />}
                     variant="outlined"
                   >
-                    {isEditFormVisible ? 'Hide form' : 'Edit'}
+                    {isEditFormVisible ? 'Скрыть форму' : 'Редактировать'}
                   </Button>
                   {editAvailabilityReason ? (
                     <Typography
@@ -407,7 +407,7 @@ function ActualCostSection({
 
   const handleArchive = async (actualCost: ActualCost) => {
     if (
-      !window.confirm(`Archive actual cost for ${formatDate(actualCost.actualDate)}?`)
+      !window.confirm(`Отправить в архив фактический расход от ${formatDate(actualCost.actualDate)}?`)
     ) {
       return
     }
@@ -434,10 +434,9 @@ function ActualCostSection({
           spacing={2}
         >
           <Stack spacing={0.5}>
-            <Typography variant="h6">Actual costs</Typography>
+            <Typography variant="h6">Фактические расходы</Typography>
             <Typography color="text.secondary">
-              Register and archive factual outgoing movements for this planned
-              cost.
+              Здесь фиксируются реальные расходы по этой плановой записи.
             </Typography>
           </Stack>
 
@@ -447,7 +446,7 @@ function ActualCostSection({
               startIcon={<AddRoundedIcon />}
               variant="contained"
             >
-              {isCreateFormOpen ? 'Hide form' : 'Add actual cost'}
+              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить факт расхода'}
             </Button>
           ) : null}
         </Stack>
@@ -466,14 +465,14 @@ function ActualCostSection({
         {archiveError ? (
           <ErrorState
             description={archiveError}
-            title="Failed to archive actual cost"
+            title="Не удалось отправить фактический расход в архив"
           />
         ) : null}
 
         {actualCostsQuery.isPending ? (
           <LoadingState
-            description="Loading actual costs linked to this planned cost."
-            title="Loading actual costs"
+            description="Загружаем фактические расходы, связанные с этой плановой записью."
+            title="Загружаем фактические расходы"
           />
         ) : null}
 
@@ -481,11 +480,11 @@ function ActualCostSection({
           <ErrorState
             action={
               <Button onClick={() => void actualCostsQuery.refetch()} variant="contained">
-                Retry
+                Повторить
               </Button>
             }
             description={actualCostsQuery.error.message}
-            title="Failed to load actual costs"
+            title="Не удалось загрузить фактические расходы"
           />
         ) : null}
 
@@ -500,16 +499,16 @@ function ActualCostSection({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add actual cost
+                  Добавить факт расхода
                 </Button>
               ) : undefined
             }
             description={
               financeCapabilities.canCreateActualCost
-                ? 'Actual outgoing costs have not been registered for this planned cost yet. Add the first factual cost to record the expense.'
-                : 'Actual outgoing costs have not been registered for this planned cost yet.'
+                ? 'По этой плановой записи пока нет фактических расходов. Добавьте первый расход, чтобы зафиксировать списание денег.'
+                : 'По этой плановой записи пока нет фактических расходов.'
             }
-            title="No actual costs yet"
+            title="Фактических расходов пока нет"
           />
         ) : null}
 
@@ -561,16 +560,16 @@ function ActualCostListItem({
             spacing={1}
           >
             <Typography variant="subtitle1">
-              Actual date: {formatDate(actualCost.actualDate)}
+              Дата расхода: {formatDate(actualCost.actualDate)}
             </Typography>
             <FinanceStatusChip value={actualCost.state} />
           </Stack>
 
           <Typography color="text.secondary" variant="body2">
-            Amount: {formatAmount(actualCost.amount)}
+            Сумма: {formatAmount(actualCost.amount)}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Comment: {actualCost.comment ?? 'No comment'}
+            Комментарий: {actualCost.comment ?? 'Без комментария'}
           </Typography>
 
           <Stack
@@ -578,17 +577,17 @@ function ActualCostListItem({
             spacing={2}
             sx={{ flexWrap: 'wrap' }}
           >
-            <MetaItem label="Version" value={String(actualCost.version)} />
+            <MetaItem label="Версия" value={String(actualCost.version)} />
             <MetaItem
-              label="Created"
+              label="Создано"
               value={formatDateTime(actualCost.createdAt)}
             />
             <MetaItem
-              label="Updated"
+              label="Обновлено"
               value={formatDateTime(actualCost.updatedAt)}
             />
             <MetaItem
-              label="Archived"
+              label="В архиве с"
               value={formatOptionalDateTime(actualCost.archivedAt)}
             />
           </Stack>
@@ -674,19 +673,19 @@ function getPlannedCostEditAvailabilityReason({
   plannedCostStatus: PlannedCost['status']
 }) {
   if (isActualCostsPending) {
-    return 'Checking actual costs before enabling edit.'
+    return 'Проверяем фактические расходы перед открытием редактирования.'
   }
 
   if (hasActualCostsError) {
-    return 'Load actual costs successfully before editing this planned cost.'
+    return 'Сначала дождитесь успешной загрузки фактических расходов.'
   }
 
   if (actualCosts.some((actualCost) => actualCost.state === 'ACTIVE')) {
     if (plannedCostStatus === 'RECEIVED') {
-      return 'Full edit is locked while an active actual cost exists. Use status change to archive it first.'
+      return 'Полное редактирование недоступно, пока существует активный фактический расход. Сначала верните статус назад и отправьте факт в архив.'
     }
 
-    return 'Archive the active actual cost to edit this planned cost.'
+    return 'Чтобы редактировать запись, сначала отправьте активный фактический расход в архив.'
   }
 
   return null

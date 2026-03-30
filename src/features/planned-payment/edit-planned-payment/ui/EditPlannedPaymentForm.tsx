@@ -43,7 +43,7 @@ const FIELD_NAMES = new Set<keyof EditPlannedPaymentFormValues>([
 ])
 
 const CONFLICT_MESSAGE =
-  'This planned payment was changed after you opened the form. Refresh the data and try again.'
+  'Плановое поступление уже изменилось после открытия формы. Обновите данные и повторите попытку.'
 
 const EMPTY_EVENT_OPTIONS: string[] = []
 
@@ -160,10 +160,9 @@ export function EditPlannedPaymentForm({
       sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}
     >
       <Stack spacing={0.5}>
-        <Typography variant="h6">Edit planned payment</Typography>
+        <Typography variant="h6">Редактирование планового поступления</Typography>
         <Typography color="text.secondary">
-          Update the linked sections and keep the DATE or EVENTS condition
-          payload mutually exclusive.
+          Обновите связанные разделы и выберите только один режим условия: по дате или по событиям.
         </Typography>
       </Stack>
 
@@ -178,8 +177,8 @@ export function EditPlannedPaymentForm({
         disabled={isSubmitting}
         error={Boolean(errors.name)}
         fullWidth
-        helperText={errors.name?.message}
-        label="Payment name"
+        helperText={errors.name?.message ?? 'Например: окончательный платёж'}
+        label="Название поступления"
       />
 
       <TextField
@@ -187,8 +186,8 @@ export function EditPlannedPaymentForm({
         disabled={isSubmitting}
         error={Boolean(errors.amount)}
         fullWidth
-        helperText={errors.amount?.message ?? 'Use the backend decimal format'}
-        label="Amount"
+        helperText={errors.amount?.message ?? 'Введите сумму в формате 150000.00'}
+        label="Сумма"
       />
 
       <Controller
@@ -211,9 +210,9 @@ export function EditPlannedPaymentForm({
                 error={Boolean(fieldState.error)}
                 helperText={
                   fieldState.error?.message ??
-                  'Select one or more section finance plans linked to this movement'
+                  'Выберите один или несколько блоков разделов, связанных с этим поступлением'
                 }
-                label="Linked sections"
+                label="Связанные блоки разделов"
               />
             )}
             renderOption={(props, option) => (
@@ -236,7 +235,7 @@ export function EditPlannedPaymentForm({
         error={Boolean(errors.conditionSource)}
         fullWidth
         helperText={errors.conditionSource?.message}
-        label="Condition source"
+        label="Когда ожидать поступление"
         select
       >
         {PLANNED_PAYMENT_CONDITION_SOURCES.map((source) => (
@@ -252,8 +251,8 @@ export function EditPlannedPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.plannedDate)}
           fullWidth
-          helperText={errors.plannedDate?.message}
-          label="Planned date"
+          helperText={errors.plannedDate?.message ?? 'Дата, к которой ожидается поступление'}
+          label="Плановая дата"
           slotProps={{
             inputLabel: {
               shrink: true,
@@ -266,8 +265,8 @@ export function EditPlannedPaymentForm({
       {conditionSource === 'EVENTS' ? (
         <Stack spacing={2.5}>
           <Alert severity="info" variant="outlined">
-            Backend treats this condition as met only when all selected project
-            and section events have occurred.
+            Условие сработает только тогда, когда произойдут все выбранные
+            проектные события и события раздела.
           </Alert>
 
           <Controller
@@ -293,9 +292,9 @@ export function EditPlannedPaymentForm({
                     error={Boolean(fieldState.error)}
                     helperText={
                       fieldState.error?.message ??
-                      'Type an external project event ID and press Enter'
+                      'Введите внешний ID проектного события и нажмите Enter'
                     }
-                    label="Project event IDs"
+                    label="ID проектных событий"
                   />
                 )}
               />
@@ -325,9 +324,9 @@ export function EditPlannedPaymentForm({
                     error={Boolean(fieldState.error)}
                     helperText={
                       fieldState.error?.message ??
-                      'Type an external section event ID and press Enter'
+                      'Введите внешний ID события раздела и нажмите Enter'
                     }
-                    label="Section event IDs"
+                    label="ID событий раздела"
                   />
                 )}
               />
@@ -343,10 +342,10 @@ export function EditPlannedPaymentForm({
           type="button"
           variant="text"
         >
-          Cancel
+          Отмена
         </Button>
         <Button disabled={isSubmitting} type="submit" variant="contained">
-          {isSubmitting ? 'Saving...' : 'Save changes'}
+          {isSubmitting ? 'Сохраняем...' : 'Сохранить изменения'}
         </Button>
       </Stack>
     </Stack>
@@ -355,15 +354,15 @@ export function EditPlannedPaymentForm({
 
 function getConditionSourceLabel(source: PlannedPaymentConditionSource) {
   if (source === 'DATE') {
-    return 'Date'
+    return 'По дате'
   }
 
-  return 'Events'
+  return 'По событиям'
 }
 
 function toSectionOption(sectionFinancePlan: SectionFinancePlan): SectionOption {
   return {
-    helperText: `External section ID: ${sectionFinancePlan.externalSectionId}`,
+    helperText: `Внешний ID раздела: ${sectionFinancePlan.externalSectionId}`,
     id: sectionFinancePlan.id,
     label: sectionFinancePlan.name,
   }
@@ -371,7 +370,7 @@ function toSectionOption(sectionFinancePlan: SectionFinancePlan): SectionOption 
 
 function createUnknownSectionOption(id: string): SectionOption {
   return {
-    helperText: 'Section finance plan is not available in the current list',
+    helperText: 'Этот блок раздела сейчас отсутствует в текущем списке',
     id,
     label: id,
   }

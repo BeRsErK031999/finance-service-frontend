@@ -4,31 +4,31 @@ import type { ChipProps } from '@mui/material/Chip'
 const financeStatusConfig = {
   ACTIVE: {
     color: 'success',
-    label: 'Active',
+    label: 'Активно',
   },
   ARCHIVED: {
     color: 'warning',
-    label: 'Archived',
+    label: 'В архиве',
   },
   DELETED: {
     color: 'default',
-    label: 'Deleted',
+    label: 'Удалено',
   },
   PLANNED: {
     color: 'default',
-    label: 'Planned',
+    label: 'Запланировано',
   },
   EXPECTED: {
     color: 'info',
-    label: 'Expected',
+    label: 'Ожидается',
   },
   RECEIVED: {
     color: 'success',
-    label: 'Received',
+    label: 'Получено',
   },
   CANCELED: {
     color: 'warning',
-    label: 'Canceled',
+    label: 'Отменено',
   },
 } satisfies Record<string, { color: ChipProps['color']; label: string }>
 

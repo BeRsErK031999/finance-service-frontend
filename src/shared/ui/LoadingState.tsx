@@ -6,8 +6,8 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({
-  title = 'Loading',
-  description = 'Please wait while data is being prepared.',
+  title = 'Загрузка',
+  description = 'Подождите, данные подготавливаются.',
 }: LoadingStateProps) {
   return (
     <Stack

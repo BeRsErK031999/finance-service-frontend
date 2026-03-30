@@ -51,13 +51,13 @@ export interface FinanceCapabilities {
 }
 
 const VIEW_ONLY_FINANCE_MODULE_REASON =
-  'You can view project finances, but creating a new project finance is not available for your current access.'
+  'Вы можете просматривать финансовые планы проектов, но создавать новые для вашей роли нельзя.'
 const NO_FINANCE_MODULE_ACCESS_REASON =
-  'You do not have access to the finance module.'
+  'У вас нет доступа к финансовому модулю.'
 const VIEW_ONLY_PROJECT_FINANCE_ACCESS_REASON =
-  'You have view-only access to this finance plan.'
+  'У вас доступ только на просмотр этого финансового плана.'
 const NO_PROJECT_FINANCE_ACCESS_REASON =
-  'You do not have access to this finance plan.'
+  'У вас нет доступа к этому финансовому плану.'
 
 export function getFinanceCapabilities(
   input: FinanceCapabilitiesInput = {},

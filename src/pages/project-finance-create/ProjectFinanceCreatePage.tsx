@@ -27,17 +27,17 @@ export function ProjectFinanceCreatePage() {
             to="/project-finances"
             variant="text"
           >
-            Back to list
+            К списку
           </Button>
         }
-        subtitle="Create the first working ProjectFinance record through the backend contract."
-        title="Create project finance"
+        subtitle="Создайте финансовый план для проекта, который уже существует во внешней системе и загружен в финансовый сервис."
+        title="Создание финансового плана"
       />
 
       {projectFinanceGlobalAccessQuery.isPending ? (
         <LoadingState
-          description="Finance module access is loading from the backend."
-          title="Loading finance access"
+          description="Проверяем, можно ли создавать финансовые планы."
+          title="Загружаем права доступа"
         />
       ) : null}
 
@@ -48,11 +48,11 @@ export function ProjectFinanceCreatePage() {
               onClick={() => void projectFinanceGlobalAccessQuery.refetch()}
               variant="contained"
             >
-              Retry
+              Повторить
             </Button>
           }
           description={projectFinanceGlobalAccessQuery.error.message}
-          title="Failed to load finance access"
+          title="Не удалось загрузить права доступа"
         />
       ) : null}
 
@@ -68,12 +68,12 @@ export function ProjectFinanceCreatePage() {
         <EmptyState
           description={
             financeCapabilities.readOnlyReason ??
-            'Current user access for project finance creation is not available.'
+            'Текущему пользователю недоступно создание финансовых планов.'
           }
           title={
             financeCapabilities.canViewProjectFinanceList
-              ? 'Project finance creation is unavailable'
-              : 'Finance access is denied'
+              ? 'Создание финансового плана недоступно'
+              : 'Нет доступа к модулю'
           }
         />
       ) : null}

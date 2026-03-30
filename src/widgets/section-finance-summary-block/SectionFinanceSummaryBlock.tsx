@@ -72,33 +72,33 @@ export function SectionFinanceSummaryBlock({
 
   const metrics: SummaryMetric[] = [
     {
-      label: 'Planned payments',
+      label: 'Плановые поступления',
       secondaryLabel: formatRecordCount(activePlannedPayments.length),
       value: plannedPaymentsTotal,
     },
     {
-      label: 'Planned costs',
+      label: 'Плановые расходы',
       secondaryLabel: formatRecordCount(activePlannedCosts.length),
       value: plannedCostsTotal,
     },
     {
-      label: 'Actual payments',
+      label: 'Фактические поступления',
       secondaryLabel: formatRecordCount(activeActualPayments.length),
       value: actualPaymentsTotal,
     },
     {
-      label: 'Actual costs',
+      label: 'Фактические расходы',
       secondaryLabel: formatRecordCount(activeActualCosts.length),
       value: actualCostsTotal,
     },
     {
-      label: 'Planned balance',
-      secondaryLabel: 'Planned payments minus planned costs',
+      label: 'Плановый баланс',
+      secondaryLabel: 'Плановые поступления минус плановые расходы',
       value: plannedPaymentsTotal - plannedCostsTotal,
     },
     {
-      label: 'Actual balance',
-      secondaryLabel: 'Actual payments minus actual costs',
+      label: 'Фактический баланс',
+      secondaryLabel: 'Фактические поступления минус фактические расходы',
       value: actualPaymentsTotal - actualCostsTotal,
     },
   ]
@@ -114,9 +114,9 @@ export function SectionFinanceSummaryBlock({
     >
       <Stack spacing={2}>
         <Stack spacing={0.5}>
-          <Typography variant="subtitle1">Section summary</Typography>
+          <Typography variant="subtitle1">Сводка по разделу</Typography>
           <Typography color="text.secondary" variant="body2">
-            Current totals for active movements linked to this section.
+            Текущие суммы по активным движениям, связанным с этим разделом.
           </Typography>
         </Stack>
 
@@ -134,7 +134,7 @@ export function SectionFinanceSummaryBlock({
                 }
                 variant="contained"
               >
-                Retry
+                Повторить
               </Button>
             }
             description={buildSummaryErrorDescription({
@@ -151,7 +151,7 @@ export function SectionFinanceSummaryBlock({
                 ? plannedPaymentsQuery.error.message
                 : null,
             })}
-            title="Failed to load section summary"
+            title="Не удалось загрузить сводку по разделу"
           />
         ) : null}
 
@@ -218,9 +218,9 @@ function CompactLoadingState() {
     >
       <CircularProgress size={24} />
       <Stack spacing={0.25}>
-        <Typography variant="body2">Loading section summary</Typography>
+        <Typography variant="body2">Загружаем сводку по разделу</Typography>
         <Typography color="text.secondary" variant="caption">
-          Aggregating planned and actual movements for this section.
+          Собираем плановые и фактические движения по этому разделу.
         </Typography>
       </Stack>
     </Stack>
@@ -243,9 +243,9 @@ function CompactEmptyState() {
       }}
       textAlign="center"
     >
-      <Typography variant="body2">Section summary is empty</Typography>
+      <Typography variant="body2">Сводка по разделу пока пустая</Typography>
       <Typography color="text.secondary" variant="caption">
-        No active planned or actual movements are linked to this section yet.
+        С этим разделом пока не связано активных плановых или фактических движений.
       </Typography>
     </Stack>
   )
@@ -256,7 +256,7 @@ function isActiveRecord<T extends { state: string }>(item: T) {
 }
 
 function getMetricValueColor(metric: SummaryMetric) {
-  if (!metric.label.includes('balance')) {
+  if (!metric.label.includes('баланс')) {
     return 'text.primary'
   }
 
@@ -286,7 +286,11 @@ function toNumericAmount(value: string) {
 }
 
 function formatRecordCount(count: number) {
-  return count === 1 ? '1 active record' : `${count} active records`
+  if (count === 1) {
+    return '1 активная запись'
+  }
+
+  return `${count} активных записей`
 }
 
 function buildSummaryErrorDescription({
@@ -301,19 +305,19 @@ function buildSummaryErrorDescription({
   actualCostsMessage: string | null
 }) {
   const failedSources = [
-    plannedPaymentsMessage ? 'planned payments' : null,
-    plannedCostsMessage ? 'planned costs' : null,
-    actualPaymentsMessage ? 'actual payments' : null,
-    actualCostsMessage ? 'actual costs' : null,
+    plannedPaymentsMessage ? 'плановые поступления' : null,
+    plannedCostsMessage ? 'плановые расходы' : null,
+    actualPaymentsMessage ? 'фактические поступления' : null,
+    actualCostsMessage ? 'фактические расходы' : null,
   ].filter((value): value is string => value !== null)
   const primaryMessage =
     plannedPaymentsMessage ??
     plannedCostsMessage ??
     actualPaymentsMessage ??
     actualCostsMessage ??
-    'Unknown section summary error'
+    'Неизвестная ошибка сводки по разделу'
 
-  return `Section summary is unavailable because ${joinLabels(failedSources)} failed to load. ${primaryMessage}`
+  return `Сводка по разделу недоступна, потому что не удалось загрузить: ${joinLabels(failedSources)}. ${primaryMessage}`
 }
 
 function joinLabels(labels: string[]) {
@@ -322,10 +326,10 @@ function joinLabels(labels: string[]) {
   }
 
   if (labels.length === 2) {
-    return `${labels[0]} and ${labels[1]}`
+    return `${labels[0]} и ${labels[1]}`
   }
 
-  return `${labels.slice(0, -1).join(', ')}, and ${labels.at(-1)}`
+  return `${labels.slice(0, -1).join(', ')} и ${labels.at(-1)}`
 }
 
 async function retryAllQueries(refetchers: Array<() => Promise<unknown>>) {

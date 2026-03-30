@@ -9,13 +9,13 @@ export const createActualCostFormSchema = z.object({
   amount: z
     .string()
     .trim()
-    .min(1, 'Amount is required')
-    .regex(amountPattern, 'Enter a valid amount with up to 2 decimals'),
+    .min(1, 'Укажите сумму')
+    .regex(amountPattern, 'Введите сумму в формате 12345.67'),
   actualDate: z
     .string()
     .trim()
-    .min(1, 'Actual date is required')
-    .regex(dateInputPattern, 'Enter a valid actual date'),
+    .min(1, 'Укажите фактическую дату')
+    .regex(dateInputPattern, 'Укажите корректную фактическую дату'),
   comment: z.string(),
 })
 

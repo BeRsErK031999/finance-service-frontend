@@ -18,7 +18,7 @@ export const changePlannedPaymentStatusFormSchema = z.object({
       (value): value is PlannedPaymentStatusChangeTarget =>
         targetStatuses.has(value as PlannedPaymentStatusChangeTarget),
       {
-        message: 'Select a target status',
+        message: 'Выберите новый статус',
       },
     ),
 })

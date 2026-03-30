@@ -33,7 +33,7 @@ import {
 const FIELD_NAMES = new Set<keyof ChangePlannedPaymentStatusFormValues>(['status'])
 
 const CONFLICT_MESSAGE =
-  'This planned payment changed after you opened the status action. Refresh the data and try again.'
+  'Плановое поступление уже изменилось после открытия формы смены статуса. Обновите данные и повторите попытку.'
 
 interface ChangePlannedPaymentStatusFormProps {
   onCancel: () => void
@@ -113,16 +113,18 @@ export function ChangePlannedPaymentStatusForm({
       sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}
     >
       <Stack spacing={0.5}>
-        <Typography variant="h6">Change planned payment status</Typography>
+        <Typography variant="h6">Смена статуса планового поступления</Typography>
         <Typography color="text.secondary">
-          Leave RECEIVED, archive the linked actual payment, and make the planned
-          payment editable again.
+          Выведите запись из статуса "Получено", архивируйте связанное фактическое
+          поступление и снова откройте запись для редактирования.
         </Typography>
       </Stack>
 
       <Alert severity="warning" variant="outlined">
-        The linked actual payment will be archived. Backend DATE and EVENTS rules
-        still decide which non-received status is actually allowed.
+        Связанное фактическое поступление будет отправлено в архив. Верните запись
+        в тот статус, в котором она должна быть без факта: "Запланировано", если
+        условие ещё не выполнено, или "Ожидается", если поступление уже должно
+        было наступить по правилу записи.
       </Alert>
 
       {formError ? (
@@ -138,12 +140,12 @@ export function ChangePlannedPaymentStatusForm({
         fullWidth
         helperText={
           errors.status?.message ??
-          'Choose the target status. The backend rejects invalid transitions.'
+          'Если правило записи уже выполнено, выберите "Ожидается". Если ещё нет, выберите "Запланировано".'
         }
-        label="New status"
+        label="Новый статус"
         select
       >
-        <MenuItem value="">Select status</MenuItem>
+        <MenuItem value="">Выберите статус</MenuItem>
         {PLANNED_PAYMENT_STATUS_CHANGE_TARGETS.map((status) => (
           <MenuItem key={status} value={status}>
             {getStatusLabel(status)}
@@ -158,10 +160,10 @@ export function ChangePlannedPaymentStatusForm({
           type="button"
           variant="text"
         >
-          Cancel
+          Отмена
         </Button>
         <Button disabled={isSubmitting} type="submit" variant="contained">
-          {isSubmitting ? 'Applying...' : 'Apply status change'}
+          {isSubmitting ? 'Применяем...' : 'Изменить статус'}
         </Button>
       </Stack>
     </Stack>
@@ -170,10 +172,10 @@ export function ChangePlannedPaymentStatusForm({
 
 function getStatusLabel(status: PlannedPaymentStatusChangeTarget) {
   if (status === 'PLANNED') {
-    return 'Planned'
+    return 'Запланировано'
   }
 
-  return 'Expected'
+  return 'Ожидается'
 }
 
 function toApiError(error: unknown): ApiError {

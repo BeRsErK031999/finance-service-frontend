@@ -109,10 +109,9 @@ export function CreateActualCostForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">New actual cost</Typography>
+          <Typography variant="h6">Новый фактический расход</Typography>
           <Typography color="text.secondary">
-            Register the factual outgoing movement for planned cost "
-            {plannedCostName}".
+            Зафиксируйте фактический расход для записи "{plannedCostName}".
           </Typography>
         </Stack>
 
@@ -127,8 +126,8 @@ export function CreateActualCostForm({
           disabled={isSubmitting}
           error={Boolean(errors.amount)}
           fullWidth
-          helperText={errors.amount?.message ?? 'Use the backend decimal format'}
-          label="Amount"
+          helperText={errors.amount?.message ?? 'Введите сумму в формате 150000.00'}
+          label="Сумма"
         />
 
         <TextField
@@ -136,8 +135,8 @@ export function CreateActualCostForm({
           disabled={isSubmitting}
           error={Boolean(errors.actualDate)}
           fullWidth
-          helperText={errors.actualDate?.message}
-          label="Actual date"
+          helperText={errors.actualDate?.message ?? 'Дата фактического расхода'}
+          label="Фактическая дата"
           slotProps={{
             inputLabel: {
               shrink: true,
@@ -151,15 +150,15 @@ export function CreateActualCostForm({
           disabled={isSubmitting}
           error={Boolean(errors.comment)}
           fullWidth
-          helperText={errors.comment?.message ?? 'Optional comment'}
-          label="Comment"
+          helperText={errors.comment?.message ?? 'Необязательно. Можно добавить пояснение к расходу.'}
+          label="Комментарий"
           minRows={3}
           multiline
         />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create actual cost'}
+            {isSubmitting ? 'Создаём...' : 'Создать фактический расход'}
           </Button>
         </Stack>
       </Stack>

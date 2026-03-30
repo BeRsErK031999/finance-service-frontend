@@ -123,10 +123,10 @@ export function CreateProjectFinanceMemberForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">Add member</Typography>
+          <Typography variant="h6">Добавить участника</Typography>
           <Typography color="text.secondary">
-            Search for an available person and choose the access level that
-            should be granted inside this project finance.
+            Выберите человека из доступного списка и назначьте ему уровень доступа
+            внутри этого финансового плана.
           </Typography>
         </Stack>
 
@@ -147,7 +147,7 @@ export function CreateProjectFinanceMemberForm({
               onClick={() => void projectFinanceAvailableMembersQuery.refetch()}
               variant="outlined"
             >
-              Retry member directory
+              Обновить список сотрудников
             </Button>
           </Stack>
         ) : null}
@@ -156,7 +156,7 @@ export function CreateProjectFinanceMemberForm({
         !projectFinanceAvailableMembersQuery.isError &&
         !hasAvailableMembers ? (
           <Alert severity="info" variant="outlined">
-            No available people can be added to this project finance yet.
+            Сейчас нет доступных сотрудников, которых можно добавить в этот финансовый план.
           </Alert>
         ) : null}
 
@@ -181,9 +181,9 @@ export function CreateProjectFinanceMemberForm({
                   error={Boolean(fieldState.error)}
                   helperText={
                     fieldState.error?.message ??
-                    'Search and select an available person'
+                    'Найдите и выберите сотрудника'
                   }
-                  label="Member"
+                  label="Участник"
                   slotProps={{
                     input: {
                       ...params.InputProps,
@@ -220,8 +220,8 @@ export function CreateProjectFinanceMemberForm({
           disabled={isSubmitting}
           error={Boolean(errors.accessLevel)}
           fullWidth
-          helperText={errors.accessLevel?.message ?? 'Choose VIEW or EDIT access'}
-          label="Access level"
+          helperText={errors.accessLevel?.message ?? 'Выберите уровень доступа: просмотр или редактирование'}
+          label="Уровень доступа"
           select
         >
           {PROJECT_FINANCE_MEMBER_ACCESS_LEVELS.map((accessLevel) => (
@@ -233,7 +233,7 @@ export function CreateProjectFinanceMemberForm({
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitDisabled} type="submit" variant="contained">
-            {isSubmitting ? 'Adding...' : 'Add member'}
+            {isSubmitting ? 'Добавляем...' : 'Добавить участника'}
           </Button>
         </Stack>
       </Stack>
@@ -299,7 +299,7 @@ function isCreateProjectFinanceMemberFieldName(
 }
 
 function getAccessLevelLabel(accessLevel: ProjectFinanceMemberAccessLevel) {
-  return accessLevel === 'EDIT' ? 'Edit' : 'View'
+  return accessLevel === 'EDIT' ? 'Редактирование' : 'Просмотр'
 }
 
 function getAvailableMemberOptionLabel(option: ProjectFinanceAvailableMember) {

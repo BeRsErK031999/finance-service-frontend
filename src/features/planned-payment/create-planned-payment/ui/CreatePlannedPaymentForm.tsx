@@ -138,11 +138,10 @@ export function CreatePlannedPaymentForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">New planned payment</Typography>
+          <Typography variant="h6">Новое плановое поступление</Typography>
           <Typography color="text.secondary">
-            This payment will be linked to section "{sectionFinancePlanName}".
-            For event-based conditions, enter the exact external event IDs that
-            the backend expects.
+            Это поступление будет связано с разделом "{sectionFinancePlanName}".
+            Для режима по событиям указывайте внешние ID событий, которые уже загружены в финансовый сервис.
           </Typography>
         </Stack>
 
@@ -157,8 +156,8 @@ export function CreatePlannedPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.name)}
           fullWidth
-          helperText={errors.name?.message}
-          label="Payment name"
+          helperText={errors.name?.message ?? 'Например: аванс от заказчика'}
+          label="Название поступления"
         />
 
         <TextField
@@ -166,8 +165,8 @@ export function CreatePlannedPaymentForm({
           disabled={isSubmitting}
           error={Boolean(errors.amount)}
           fullWidth
-          helperText={errors.amount?.message ?? 'Use the backend decimal format'}
-          label="Amount"
+          helperText={errors.amount?.message ?? 'Введите сумму в формате 150000.00'}
+          label="Сумма"
         />
 
         <TextField
@@ -176,7 +175,7 @@ export function CreatePlannedPaymentForm({
           error={Boolean(errors.conditionSource)}
           fullWidth
           helperText={errors.conditionSource?.message}
-          label="Condition source"
+          label="Когда ожидать поступление"
           select
         >
           {PLANNED_PAYMENT_CONDITION_SOURCES.map((source) => (
@@ -192,8 +191,8 @@ export function CreatePlannedPaymentForm({
             disabled={isSubmitting}
             error={Boolean(errors.plannedDate)}
             fullWidth
-            helperText={errors.plannedDate?.message}
-            label="Planned date"
+            helperText={errors.plannedDate?.message ?? 'Дата, к которой ожидается поступление'}
+            label="Плановая дата"
             slotProps={{
               inputLabel: {
                 shrink: true,
@@ -206,8 +205,8 @@ export function CreatePlannedPaymentForm({
         {conditionSource === 'EVENTS' ? (
           <Stack spacing={2.5}>
             <Alert severity="info" variant="outlined">
-              Backend treats this condition as met only when all selected
-              project and section events have occurred.
+              Условие сработает только тогда, когда произойдут все выбранные
+              проектные события и события раздела.
             </Alert>
 
             <Controller
@@ -233,9 +232,9 @@ export function CreatePlannedPaymentForm({
                       error={Boolean(fieldState.error)}
                       helperText={
                         fieldState.error?.message ??
-                        'Type an external project event ID and press Enter'
+                        'Введите внешний ID проектного события и нажмите Enter'
                       }
-                      label="Project event IDs"
+                      label="ID проектных событий"
                     />
                   )}
                 />
@@ -265,9 +264,9 @@ export function CreatePlannedPaymentForm({
                       error={Boolean(fieldState.error)}
                       helperText={
                         fieldState.error?.message ??
-                        'Type an external section event ID and press Enter'
+                        'Введите внешний ID события раздела и нажмите Enter'
                       }
-                      label="Section event IDs"
+                      label="ID событий раздела"
                     />
                   )}
                 />
@@ -278,7 +277,7 @@ export function CreatePlannedPaymentForm({
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create planned payment'}
+            {isSubmitting ? 'Создаём...' : 'Создать плановое поступление'}
           </Button>
         </Stack>
       </Stack>
@@ -288,10 +287,10 @@ export function CreatePlannedPaymentForm({
 
 function getConditionSourceLabel(source: PlannedPaymentConditionSource) {
   if (source === 'DATE') {
-    return 'Date'
+    return 'По дате'
   }
 
-  return 'Events'
+  return 'По событиям'
 }
 
 function normalizeAutocompleteValues(values: string[]) {

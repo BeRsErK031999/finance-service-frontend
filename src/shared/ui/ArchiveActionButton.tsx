@@ -20,7 +20,7 @@ export function ArchiveActionButton({
       startIcon={<ArchiveOutlinedIcon />}
       variant="outlined"
     >
-      {isArchiving ? 'Archiving...' : isArchived ? 'Archived' : 'Archive'}
+      {isArchiving ? 'Архивируем...' : isArchived ? 'В архиве' : 'Архивировать'}
     </Button>
   )
 }

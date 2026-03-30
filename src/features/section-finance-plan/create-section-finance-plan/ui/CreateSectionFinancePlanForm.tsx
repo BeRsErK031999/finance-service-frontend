@@ -91,10 +91,10 @@ export function CreateSectionFinancePlanForm({
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
       <Stack component="form" noValidate onSubmit={onSubmit} spacing={3}>
         <Stack spacing={0.5}>
-          <Typography variant="h6">New section</Typography>
+          <Typography variant="h6">Новый финансовый блок раздела</Typography>
           <Typography color="text.secondary">
-            Use the external section ID that already exists in the backend and
-            belongs to the current project finance.
+            Укажите ID раздела, который уже существует во внешней системе и относится
+            к текущему проекту.
           </Typography>
         </Stack>
 
@@ -109,8 +109,11 @@ export function CreateSectionFinancePlanForm({
           disabled={isSubmitting}
           error={Boolean(errors.externalSectionId)}
           fullWidth
-          helperText={errors.externalSectionId?.message}
-          label="External section ID"
+          helperText={
+            errors.externalSectionId?.message ??
+            'ID раздела должен быть загружен в финансовый сервис из внешней системы.'
+          }
+          label="ID раздела во внешней системе"
         />
 
         <TextField
@@ -118,8 +121,8 @@ export function CreateSectionFinancePlanForm({
           disabled={isSubmitting}
           error={Boolean(errors.name)}
           fullWidth
-          helperText={errors.name?.message}
-          label="Section name"
+          helperText={errors.name?.message ?? 'Это название будет видно внутри финансового плана.'}
+          label="Название блока раздела"
         />
 
         <TextField
@@ -127,15 +130,15 @@ export function CreateSectionFinancePlanForm({
           disabled={isSubmitting}
           error={Boolean(errors.description)}
           fullWidth
-          helperText={errors.description?.message ?? 'Optional'}
-          label="Description"
+          helperText={errors.description?.message ?? 'Необязательно. Можно уточнить назначение блока.'}
+          label="Описание"
           minRows={4}
           multiline
         />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">
-            {isSubmitting ? 'Creating...' : 'Create section'}
+            {isSubmitting ? 'Создаём...' : 'Создать блок раздела'}
           </Button>
         </Stack>
       </Stack>

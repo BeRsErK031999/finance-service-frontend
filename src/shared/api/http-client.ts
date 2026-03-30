@@ -6,7 +6,7 @@ import { getCurrentRequestUserId } from '../auth/mock-auth'
 export const apiClient = axios.create({
   baseURL: appConfig.apiBaseUrl,
   timeout: 10_000,
-  timeoutErrorMessage: 'Request timed out. Please try again.',
+  timeoutErrorMessage: 'Сервер долго не отвечает. Попробуйте ещё раз.',
   headers: {
     Accept: 'application/json',
   },

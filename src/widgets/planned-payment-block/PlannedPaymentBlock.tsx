@@ -71,7 +71,7 @@ export function PlannedPaymentBlock({
 
   const handleArchive = async (plannedPayment: PlannedPayment) => {
     if (
-      !window.confirm(`Archive planned payment "${plannedPayment.name}"?`)
+      !window.confirm(`Отправить в архив плановое поступление "${plannedPayment.name}"?`)
     ) {
       return
     }
@@ -98,9 +98,9 @@ export function PlannedPaymentBlock({
           spacing={2}
         >
           <Stack spacing={0.5}>
-            <Typography variant="h6">Planned payments</Typography>
+            <Typography variant="h6">Плановые поступления</Typography>
             <Typography color="text.secondary">
-              Manage planned incoming money movements linked to this section.
+              Здесь показаны ожидаемые поступления, связанные с этим разделом.
             </Typography>
           </Stack>
 
@@ -110,7 +110,7 @@ export function PlannedPaymentBlock({
               startIcon={<AddRoundedIcon />}
               variant="contained"
             >
-              {isCreateFormOpen ? 'Hide form' : 'Add payment'}
+              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить поступление'}
             </Button>
           ) : null}
         </Stack>
@@ -128,14 +128,14 @@ export function PlannedPaymentBlock({
         {archiveError ? (
           <ErrorState
             description={archiveError}
-            title="Failed to archive planned payment"
+            title="Не удалось отправить плановое поступление в архив"
           />
         ) : null}
 
         {plannedPaymentsQuery.isPending ? (
           <LoadingState
-            description="Loading planned payments for this project finance."
-            title="Loading planned payments"
+            description="Загружаем плановые поступления для этого финансового плана."
+            title="Загружаем плановые поступления"
           />
         ) : null}
 
@@ -143,11 +143,11 @@ export function PlannedPaymentBlock({
           <ErrorState
             action={
               <Button onClick={() => void plannedPaymentsQuery.refetch()} variant="contained">
-                Retry
+                Повторить
               </Button>
             }
             description={plannedPaymentsQuery.error.message}
-            title="Failed to load planned payments"
+            title="Не удалось загрузить плановые поступления"
           />
         ) : null}
 
@@ -162,16 +162,16 @@ export function PlannedPaymentBlock({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add payment
+                  Добавить поступление
                 </Button>
               ) : undefined
             }
             description={
               canCreatePlannedPayment
-                ? 'No planned payments are linked to this section yet. Create the first planned incoming movement here.'
-                : 'No planned payments are linked to this section yet.'
+                ? 'Для этого раздела пока нет плановых поступлений. Добавьте первое ожидаемое поступление.'
+                : 'Для этого раздела пока нет плановых поступлений.'
             }
-            title="No planned payments yet"
+            title="Плановых поступлений пока нет"
           />
         ) : null}
 
@@ -261,27 +261,27 @@ function PlannedPaymentListItem({
             </Stack>
 
             <Typography color="text.secondary" variant="body2">
-              Amount: {formatAmount(plannedPayment.amount)}
+              Сумма: {formatAmount(plannedPayment.amount)}
             </Typography>
 
             {plannedPayment.conditionSource === 'DATE' ? (
               <Typography color="text.secondary" variant="body2">
-                Planned date: {formatOptionalDate(plannedPayment.plannedDate)}
+                Плановая дата: {formatOptionalDate(plannedPayment.plannedDate)}
               </Typography>
             ) : (
               <Stack spacing={1}>
                 <Typography color="text.secondary" variant="body2">
-                  Condition: all selected project and section events must occur.
+                  Поступление ожидается только после того, как произойдут все выбранные проектные события и события раздела.
                 </Typography>
                 {plannedPayment.projectEventIds.length > 0 ? (
                   <IdentifierGroup
-                    label="Project events"
+                    label="Проектные события"
                     values={plannedPayment.projectEventIds}
                   />
                 ) : null}
                 {plannedPayment.sectionEventIds.length > 0 ? (
                   <IdentifierGroup
-                    label="Section events"
+                    label="События раздела"
                     values={plannedPayment.sectionEventIds}
                   />
                 ) : null}
@@ -293,21 +293,21 @@ function PlannedPaymentListItem({
               spacing={2}
               sx={{ flexWrap: 'wrap' }}
             >
-              <MetaItem label="Version" value={String(plannedPayment.version)} />
+              <MetaItem label="Версия" value={String(plannedPayment.version)} />
               <MetaItem
-                label="Created"
+                label="Создано"
                 value={formatDateTime(plannedPayment.createdAt)}
               />
               <MetaItem
-                label="Updated"
+                label="Обновлено"
                 value={formatDateTime(plannedPayment.updatedAt)}
               />
               <MetaItem
-                label="Actual date"
+                label="Фактическая дата"
                 value={formatOptionalDate(plannedPayment.actualDate)}
               />
               <MetaItem
-                label="Archived"
+                label="В архиве с"
                 value={formatOptionalDateTime(plannedPayment.archivedAt)}
               />
             </Stack>
@@ -321,7 +321,7 @@ function PlannedPaymentListItem({
                   startIcon={<SyncAltRoundedIcon />}
                   variant="outlined"
                 >
-                  {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+                  {isStatusFormOpen ? 'Скрыть форму' : 'Изменить статус'}
                 </Button>
               ) : null}
               {canEditPlannedPayment ? (
@@ -332,7 +332,7 @@ function PlannedPaymentListItem({
                     startIcon={<EditOutlinedIcon />}
                     variant="outlined"
                   >
-                    {isEditFormVisible ? 'Hide form' : 'Edit'}
+                    {isEditFormVisible ? 'Скрыть форму' : 'Редактировать'}
                   </Button>
                   {editAvailabilityReason ? (
                     <Typography
@@ -413,7 +413,7 @@ function ActualPaymentSection({
   const handleArchive = async (actualPayment: ActualPayment) => {
     if (
       !window.confirm(
-        `Archive actual payment for ${formatDate(actualPayment.actualDate)}?`,
+        `Отправить в архив фактическое поступление от ${formatDate(actualPayment.actualDate)}?`,
       )
     ) {
       return
@@ -441,10 +441,9 @@ function ActualPaymentSection({
           spacing={2}
         >
           <Stack spacing={0.5}>
-            <Typography variant="h6">Actual payments</Typography>
+            <Typography variant="h6">Фактические поступления</Typography>
             <Typography color="text.secondary">
-              Register and archive factual incoming movements for this planned
-              payment.
+              Здесь фиксируются реальные поступления по этой плановой записи.
             </Typography>
           </Stack>
 
@@ -454,7 +453,7 @@ function ActualPaymentSection({
               startIcon={<AddRoundedIcon />}
               variant="contained"
             >
-              {isCreateFormOpen ? 'Hide form' : 'Add actual payment'}
+              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить факт поступления'}
             </Button>
           ) : null}
         </Stack>
@@ -473,14 +472,14 @@ function ActualPaymentSection({
         {archiveError ? (
           <ErrorState
             description={archiveError}
-            title="Failed to archive actual payment"
+            title="Не удалось отправить фактическое поступление в архив"
           />
         ) : null}
 
         {actualPaymentsQuery.isPending ? (
           <LoadingState
-            description="Loading actual payments linked to this planned payment."
-            title="Loading actual payments"
+            description="Загружаем фактические поступления, связанные с этой плановой записью."
+            title="Загружаем фактические поступления"
           />
         ) : null}
 
@@ -488,11 +487,11 @@ function ActualPaymentSection({
           <ErrorState
             action={
               <Button onClick={() => void actualPaymentsQuery.refetch()} variant="contained">
-                Retry
+                Повторить
               </Button>
             }
             description={actualPaymentsQuery.error.message}
-            title="Failed to load actual payments"
+            title="Не удалось загрузить фактические поступления"
           />
         ) : null}
 
@@ -507,16 +506,16 @@ function ActualPaymentSection({
                   startIcon={<AddRoundedIcon />}
                   variant="contained"
                 >
-                  Add actual payment
+                  Добавить факт поступления
                 </Button>
               ) : undefined
             }
             description={
               financeCapabilities.canCreateActualPayment
-                ? 'Actual incoming payments have not been registered for this planned payment yet. Add the first factual payment to record receipt.'
-                : 'Actual incoming payments have not been registered for this planned payment yet.'
+                ? 'По этой плановой записи пока нет фактических поступлений. Добавьте первое поступление, чтобы зафиксировать получение денег.'
+                : 'По этой плановой записи пока нет фактических поступлений.'
             }
-            title="No actual payments yet"
+            title="Фактических поступлений пока нет"
           />
         ) : null}
 
@@ -568,16 +567,16 @@ function ActualPaymentListItem({
             spacing={1}
           >
             <Typography variant="subtitle1">
-              Actual date: {formatDate(actualPayment.actualDate)}
+              Дата поступления: {formatDate(actualPayment.actualDate)}
             </Typography>
             <FinanceStatusChip value={actualPayment.state} />
           </Stack>
 
           <Typography color="text.secondary" variant="body2">
-            Amount: {formatAmount(actualPayment.amount)}
+            Сумма: {formatAmount(actualPayment.amount)}
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Comment: {actualPayment.comment ?? 'No comment'}
+            Комментарий: {actualPayment.comment ?? 'Без комментария'}
           </Typography>
 
           <Stack
@@ -585,17 +584,17 @@ function ActualPaymentListItem({
             spacing={2}
             sx={{ flexWrap: 'wrap' }}
           >
-            <MetaItem label="Version" value={String(actualPayment.version)} />
+            <MetaItem label="Версия" value={String(actualPayment.version)} />
             <MetaItem
-              label="Created"
+              label="Создано"
               value={formatDateTime(actualPayment.createdAt)}
             />
             <MetaItem
-              label="Updated"
+              label="Обновлено"
               value={formatDateTime(actualPayment.updatedAt)}
             />
             <MetaItem
-              label="Archived"
+              label="В архиве с"
               value={formatOptionalDateTime(actualPayment.archivedAt)}
             />
           </Stack>
@@ -681,19 +680,19 @@ function getPlannedPaymentEditAvailabilityReason({
   plannedPaymentStatus: PlannedPayment['status']
 }) {
   if (isActualPaymentsPending) {
-    return 'Checking actual payments before enabling edit.'
+    return 'Проверяем фактические поступления перед открытием редактирования.'
   }
 
   if (hasActualPaymentsError) {
-    return 'Load actual payments successfully before editing this planned payment.'
+    return 'Сначала дождитесь успешной загрузки фактических поступлений.'
   }
 
   if (actualPayments.some((actualPayment) => actualPayment.state === 'ACTIVE')) {
     if (plannedPaymentStatus === 'RECEIVED') {
-      return 'Full edit is locked while an active actual payment exists. Use status change to archive it first.'
+      return 'Полное редактирование недоступно, пока существует активное фактическое поступление. Сначала верните статус назад и отправьте факт в архив.'
     }
 
-    return 'Archive the active actual payment to edit this planned payment.'
+    return 'Чтобы редактировать запись, сначала отправьте активное фактическое поступление в архив.'
   }
 
   return null
