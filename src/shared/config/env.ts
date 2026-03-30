@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
-  VITE_API_BASE_URL: z.string().trim().min(1).default('http://localhost:3000'),
+  VITE_API_BASE_URL: z.string().trim().min(1).default('/api'),
   VITE_CURRENT_USER_ID: z.preprocess(
     (value) =>
       typeof value === 'string' && value.trim().length === 0 ? undefined : value,
