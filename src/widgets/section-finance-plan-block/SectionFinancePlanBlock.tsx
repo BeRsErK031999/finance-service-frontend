@@ -11,6 +11,7 @@ import {
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { CreateSectionFinancePlanForm } from '../../features/section-finance-plan/create-section-finance-plan/ui/CreateSectionFinancePlanForm'
 import { EditSectionFinancePlanForm } from '../../features/section-finance-plan/edit-section-finance-plan/ui/EditSectionFinancePlanForm'
+import type { FinanceCapabilities } from '../../shared/access/finance-capabilities'
 import {
   formatDateTime,
   formatOptionalDateTime,
@@ -25,17 +26,21 @@ import { LoadingState } from '../../shared/ui/LoadingState'
 import { SectionCard } from '../../shared/ui/SectionCard'
 import { PlannedCostBlock } from '../planned-cost-block/PlannedCostBlock'
 import { PlannedPaymentBlock } from '../planned-payment-block/PlannedPaymentBlock'
+import { SectionFinanceSummaryBlock } from '../section-finance-summary-block/SectionFinanceSummaryBlock'
 
 interface SectionFinancePlanBlockProps {
+  financeCapabilities: FinanceCapabilities
   projectFinanceId: string
 }
 
 export function SectionFinancePlanBlock({
+  financeCapabilities,
   projectFinanceId,
 }: SectionFinancePlanBlockProps) {
   const sectionFinancePlansQuery = useSectionFinancePlans(projectFinanceId)
   const archiveSectionFinancePlanMutation = useArchiveSectionFinancePlan()
   const sectionFinancePlans = sectionFinancePlansQuery.data?.items ?? []
+  const canCreateSectionFinancePlan = financeCapabilities.canCreateSectionFinancePlan
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
@@ -64,21 +69,25 @@ export function SectionFinancePlanBlock({
   return (
     <SectionCard
       action={
-        <Button
-          onClick={() => setIsCreateFormOpen((current) => !current)}
-          startIcon={<AddRoundedIcon />}
-          variant="contained"
-        >
-          {isCreateFormOpen ? 'Hide form' : 'Add section'}
-        </Button>
+        canCreateSectionFinancePlan ? (
+          <Button
+            onClick={() => setIsCreateFormOpen((current) => !current)}
+            startIcon={<AddRoundedIcon />}
+            variant="contained"
+          >
+            {isCreateFormOpen ? 'Hide form' : 'Add section'}
+          </Button>
+        ) : undefined
       }
       subtitle="Manage the section-level finance plan blocks linked to this project finance."
       title="Section finance plans"
     >
       <Stack spacing={3}>
-        <Collapse in={isCreateFormOpen} unmountOnExit>
-          <CreateSectionFinancePlanForm projectFinanceId={projectFinanceId} />
-        </Collapse>
+        {canCreateSectionFinancePlan ? (
+          <Collapse in={isCreateFormOpen} unmountOnExit>
+            <CreateSectionFinancePlanForm projectFinanceId={projectFinanceId} />
+          </Collapse>
+        ) : null}
 
         {archiveError ? (
           <ErrorState
@@ -114,7 +123,7 @@ export function SectionFinancePlanBlock({
         sectionFinancePlans.length === 0 ? (
           <EmptyState
             action={
-              !isCreateFormOpen ? (
+              canCreateSectionFinancePlan && !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -124,7 +133,11 @@ export function SectionFinancePlanBlock({
                 </Button>
               ) : undefined
             }
-            description="Create the first section finance plan for this project finance."
+            description={
+              canCreateSectionFinancePlan
+                ? 'Create the first section finance plan for this project finance.'
+                : 'No section finance plans are available for viewing in this project finance yet.'
+            }
             title="No sections yet"
           />
         ) : null}
@@ -136,6 +149,7 @@ export function SectionFinancePlanBlock({
             {sectionFinancePlans.map((sectionFinancePlan) => (
               <SectionFinancePlanListItem
                 availableSectionFinancePlans={sectionFinancePlans}
+                financeCapabilities={financeCapabilities}
                 isArchiving={archivingId === sectionFinancePlan.id}
                 key={sectionFinancePlan.id}
                 onArchive={handleArchive}
@@ -151,18 +165,24 @@ export function SectionFinancePlanBlock({
 
 function SectionFinancePlanListItem({
   availableSectionFinancePlans,
+  financeCapabilities,
   isArchiving,
   onArchive,
   sectionFinancePlan,
 }: {
   availableSectionFinancePlans: SectionFinancePlan[]
+  financeCapabilities: FinanceCapabilities
   isArchiving: boolean
   onArchive: (sectionFinancePlan: SectionFinancePlan) => Promise<void>
   sectionFinancePlan: SectionFinancePlan
 }) {
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const isArchived = sectionFinancePlan.state !== 'ACTIVE'
-  const isEditFormVisible = !isArchived && isEditFormOpen
+  const canEditSectionFinancePlan = financeCapabilities.canEditSectionFinancePlan
+  const canArchiveSectionFinancePlan = financeCapabilities.canArchiveSectionFinancePlan
+  const isEditFormVisible =
+    canEditSectionFinancePlan && !isArchived && isEditFormOpen
+  const showActions = canEditSectionFinancePlan || canArchiveSectionFinancePlan
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -213,33 +233,47 @@ function SectionFinancePlanListItem({
             </Stack>
           </Stack>
 
-          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-            <Button
-              disabled={isArchived}
-              onClick={() => setIsEditFormOpen((current) => !current)}
-              startIcon={<EditOutlinedIcon />}
-              variant="outlined"
-            >
-              {isEditFormVisible ? 'Hide form' : 'Edit'}
-            </Button>
-            <ArchiveActionButton
-              isArchived={isArchived}
-              isArchiving={isArchiving}
-              onClick={() => void onArchive(sectionFinancePlan)}
-            />
-          </Stack>
+          {showActions ? (
+            <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+              {canEditSectionFinancePlan ? (
+                <Button
+                  disabled={isArchived}
+                  onClick={() => setIsEditFormOpen((current) => !current)}
+                  startIcon={<EditOutlinedIcon />}
+                  variant="outlined"
+                >
+                  {isEditFormVisible ? 'Hide form' : 'Edit'}
+                </Button>
+              ) : null}
+              {canArchiveSectionFinancePlan ? (
+                <ArchiveActionButton
+                  isArchived={isArchived}
+                  isArchiving={isArchiving}
+                  onClick={() => void onArchive(sectionFinancePlan)}
+                />
+              ) : null}
+            </Stack>
+          ) : null}
         </Stack>
 
-        <Collapse in={isEditFormVisible} unmountOnExit>
-          <EditSectionFinancePlanForm
-            onCancel={() => setIsEditFormOpen(false)}
-            onSuccess={() => setIsEditFormOpen(false)}
-            sectionFinancePlan={sectionFinancePlan}
-          />
-        </Collapse>
+        {canEditSectionFinancePlan ? (
+          <Collapse in={isEditFormVisible} unmountOnExit>
+            <EditSectionFinancePlanForm
+              onCancel={() => setIsEditFormOpen(false)}
+              onSuccess={() => setIsEditFormOpen(false)}
+              sectionFinancePlan={sectionFinancePlan}
+            />
+          </Collapse>
+        ) : null}
+
+        <SectionFinanceSummaryBlock
+          projectFinanceId={sectionFinancePlan.projectFinanceId}
+          sectionFinancePlanId={sectionFinancePlan.id}
+        />
 
         <PlannedPaymentBlock
           availableSectionFinancePlans={availableSectionFinancePlans}
+          financeCapabilities={financeCapabilities}
           projectFinanceId={sectionFinancePlan.projectFinanceId}
           sectionFinancePlanId={sectionFinancePlan.id}
           sectionFinancePlanName={sectionFinancePlan.name}
@@ -247,6 +281,7 @@ function SectionFinancePlanListItem({
 
         <PlannedCostBlock
           availableSectionFinancePlans={availableSectionFinancePlans}
+          financeCapabilities={financeCapabilities}
           projectFinanceId={sectionFinancePlan.projectFinanceId}
           sectionFinancePlanId={sectionFinancePlan.id}
           sectionFinancePlanName={sectionFinancePlan.name}

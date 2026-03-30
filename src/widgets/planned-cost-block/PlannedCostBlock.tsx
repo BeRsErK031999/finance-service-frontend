@@ -27,6 +27,7 @@ import { ChangePlannedCostStatusForm } from '../../features/planned-cost/change-
 import { EditPlannedCostForm } from '../../features/planned-cost/edit-planned-cost/ui/EditPlannedCostForm'
 import { CreatePlannedCostForm } from '../../features/planned-cost/create-planned-cost/ui/CreatePlannedCostForm'
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
+import type { FinanceCapabilities } from '../../shared/access/finance-capabilities'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import {
   formatAmount,
@@ -44,6 +45,7 @@ import { LoadingState } from '../../shared/ui/LoadingState'
 
 interface PlannedCostBlockProps {
   availableSectionFinancePlans: SectionFinancePlan[]
+  financeCapabilities: FinanceCapabilities
   projectFinanceId: string
   sectionFinancePlanId: string
   sectionFinancePlanName: string
@@ -51,12 +53,14 @@ interface PlannedCostBlockProps {
 
 export function PlannedCostBlock({
   availableSectionFinancePlans,
+  financeCapabilities,
   projectFinanceId,
   sectionFinancePlanId,
   sectionFinancePlanName,
 }: PlannedCostBlockProps) {
   const plannedCostsQuery = usePlannedCosts(projectFinanceId)
   const archivePlannedCostMutation = useArchivePlannedCost()
+  const canCreatePlannedCost = financeCapabilities.canCreatePlannedCost
   const plannedCosts = (plannedCostsQuery.data?.items ?? []).filter((plannedCost) =>
     plannedCost.sectionFinancePlanIds.includes(sectionFinancePlanId),
   )
@@ -97,22 +101,26 @@ export function PlannedCostBlock({
             </Typography>
           </Stack>
 
-          <Button
-            onClick={() => setIsCreateFormOpen((current) => !current)}
-            startIcon={<AddRoundedIcon />}
-            variant="contained"
-          >
-            {isCreateFormOpen ? 'Hide form' : 'Add cost'}
-          </Button>
+          {canCreatePlannedCost ? (
+            <Button
+              onClick={() => setIsCreateFormOpen((current) => !current)}
+              startIcon={<AddRoundedIcon />}
+              variant="contained"
+            >
+              {isCreateFormOpen ? 'Hide form' : 'Add cost'}
+            </Button>
+          ) : null}
         </Stack>
 
-        <Collapse in={isCreateFormOpen} unmountOnExit>
-          <CreatePlannedCostForm
-            projectFinanceId={projectFinanceId}
-            sectionFinancePlanId={sectionFinancePlanId}
-            sectionFinancePlanName={sectionFinancePlanName}
-          />
-        </Collapse>
+        {canCreatePlannedCost ? (
+          <Collapse in={isCreateFormOpen} unmountOnExit>
+            <CreatePlannedCostForm
+              projectFinanceId={projectFinanceId}
+              sectionFinancePlanId={sectionFinancePlanId}
+              sectionFinancePlanName={sectionFinancePlanName}
+            />
+          </Collapse>
+        ) : null}
 
         {archiveError ? (
           <ErrorState
@@ -145,7 +153,7 @@ export function PlannedCostBlock({
         plannedCosts.length === 0 ? (
           <EmptyState
             action={
-              !isCreateFormOpen ? (
+              canCreatePlannedCost && !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -155,7 +163,11 @@ export function PlannedCostBlock({
                 </Button>
               ) : undefined
             }
-            description="No planned costs are linked to this section yet. Create the first planned outgoing movement here."
+            description={
+              canCreatePlannedCost
+                ? 'No planned costs are linked to this section yet. Create the first planned outgoing movement here.'
+                : 'No planned costs are linked to this section yet.'
+            }
             title="No planned costs yet"
           />
         ) : null}
@@ -167,6 +179,7 @@ export function PlannedCostBlock({
             {plannedCosts.map((plannedCost) => (
               <PlannedCostListItem
                 availableSectionFinancePlans={availableSectionFinancePlans}
+                financeCapabilities={financeCapabilities}
                 isArchiving={archivingId === plannedCost.id}
                 key={plannedCost.id}
                 onArchive={handleArchive}
@@ -182,11 +195,13 @@ export function PlannedCostBlock({
 
 function PlannedCostListItem({
   availableSectionFinancePlans,
+  financeCapabilities,
   isArchiving,
   onArchive,
   plannedCost,
 }: {
   availableSectionFinancePlans: SectionFinancePlan[]
+  financeCapabilities: FinanceCapabilities
   isArchiving: boolean
   onArchive: (plannedCost: PlannedCost) => Promise<void>
   plannedCost: PlannedCost
@@ -202,6 +217,7 @@ function PlannedCostListItem({
     (actualCost) => actualCost.state === 'ACTIVE',
   )
   const showStatusChangeAction =
+    financeCapabilities.canChangePlannedCostStatus &&
     !isArchived && plannedCost.status === 'RECEIVED' && hasActiveActualCost
   const editAvailabilityReason = getPlannedCostEditAvailabilityReason({
     actualCosts,
@@ -209,7 +225,15 @@ function PlannedCostListItem({
     isActualCostsPending: actualCostsQuery.isPending,
     plannedCostStatus: plannedCost.status,
   })
-  const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
+  const canEditPlannedCost = financeCapabilities.canEditPlannedCost
+  const canArchivePlannedCost = financeCapabilities.canArchivePlannedCost
+  const isEditFormVisible =
+    canEditPlannedCost &&
+    !isArchived &&
+    editAvailabilityReason === null &&
+    isEditFormOpen
+  const showActions =
+    showStatusChangeAction || canEditPlannedCost || canArchivePlannedCost
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -284,39 +308,47 @@ function PlannedCostListItem({
             </Stack>
           </Stack>
 
-          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-            {showStatusChangeAction ? (
-              <Button
-                onClick={() => setIsStatusFormOpen((current) => !current)}
-                startIcon={<SyncAltRoundedIcon />}
-                variant="outlined"
-              >
-                {isStatusFormOpen ? 'Hide status action' : 'Change status'}
-              </Button>
-            ) : null}
-            <Button
-              disabled={isArchived || editAvailabilityReason !== null}
-              onClick={() => setIsEditFormOpen((current) => !current)}
-              startIcon={<EditOutlinedIcon />}
-              variant="outlined"
-            >
-              {isEditFormVisible ? 'Hide form' : 'Edit'}
-            </Button>
-            {editAvailabilityReason ? (
-              <Typography
-                color="text.secondary"
-                sx={{ maxWidth: 240 }}
-                variant="caption"
-              >
-                {editAvailabilityReason}
-              </Typography>
-            ) : null}
-            <ArchiveActionButton
-              isArchived={isArchived}
-              isArchiving={isArchiving}
-              onClick={() => void onArchive(plannedCost)}
-            />
-          </Stack>
+          {showActions ? (
+            <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+              {showStatusChangeAction ? (
+                <Button
+                  onClick={() => setIsStatusFormOpen((current) => !current)}
+                  startIcon={<SyncAltRoundedIcon />}
+                  variant="outlined"
+                >
+                  {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+                </Button>
+              ) : null}
+              {canEditPlannedCost ? (
+                <>
+                  <Button
+                    disabled={isArchived || editAvailabilityReason !== null}
+                    onClick={() => setIsEditFormOpen((current) => !current)}
+                    startIcon={<EditOutlinedIcon />}
+                    variant="outlined"
+                  >
+                    {isEditFormVisible ? 'Hide form' : 'Edit'}
+                  </Button>
+                  {editAvailabilityReason ? (
+                    <Typography
+                      color="text.secondary"
+                      sx={{ maxWidth: 240 }}
+                      variant="caption"
+                    >
+                      {editAvailabilityReason}
+                    </Typography>
+                  ) : null}
+                </>
+              ) : null}
+              {canArchivePlannedCost ? (
+                <ArchiveActionButton
+                  isArchived={isArchived}
+                  isArchiving={isArchiving}
+                  onClick={() => void onArchive(plannedCost)}
+                />
+              ) : null}
+            </Stack>
+          ) : null}
         </Stack>
 
         <Collapse in={showStatusChangeAction && isStatusFormOpen} unmountOnExit>
@@ -327,24 +359,31 @@ function PlannedCostListItem({
           />
         </Collapse>
 
-        <Collapse in={isEditFormVisible} unmountOnExit>
-          <EditPlannedCostForm
-            availableSectionFinancePlans={availableSectionFinancePlans}
-            onCancel={() => setIsEditFormOpen(false)}
-            onSuccess={() => setIsEditFormOpen(false)}
-            plannedCost={plannedCost}
-          />
-        </Collapse>
+        {canEditPlannedCost ? (
+          <Collapse in={isEditFormVisible} unmountOnExit>
+            <EditPlannedCostForm
+              availableSectionFinancePlans={availableSectionFinancePlans}
+              onCancel={() => setIsEditFormOpen(false)}
+              onSuccess={() => setIsEditFormOpen(false)}
+              plannedCost={plannedCost}
+            />
+          </Collapse>
+        ) : null}
 
-        <ActualCostSection plannedCost={plannedCost} />
+        <ActualCostSection
+          financeCapabilities={financeCapabilities}
+          plannedCost={plannedCost}
+        />
       </Stack>
     </Paper>
   )
 }
 
 function ActualCostSection({
+  financeCapabilities,
   plannedCost,
 }: {
+  financeCapabilities: FinanceCapabilities
   plannedCost: PlannedCost
 }) {
   const actualCostsQuery = useActualCosts({
@@ -352,6 +391,16 @@ function ActualCostSection({
   })
   const archiveActualCostMutation = useArchiveActualCost()
   const actualCosts = actualCostsQuery.data?.items ?? []
+  const hasActiveActualCost = actualCosts.some(
+    (actualCost) => actualCost.state === 'ACTIVE',
+  )
+  const canCreateActualCost =
+    !actualCostsQuery.isPending &&
+    !actualCostsQuery.isError &&
+    plannedCost.state === 'ACTIVE' &&
+    !hasActiveActualCost
+  const showCreateActualCostAction =
+    financeCapabilities.canCreateActualCost && canCreateActualCost
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
@@ -392,7 +441,7 @@ function ActualCostSection({
             </Typography>
           </Stack>
 
-          {actualCosts.length === 0 ? (
+          {showCreateActualCostAction ? (
             <Button
               onClick={() => setIsCreateFormOpen((current) => !current)}
               startIcon={<AddRoundedIcon />}
@@ -403,14 +452,16 @@ function ActualCostSection({
           ) : null}
         </Stack>
 
-        <Collapse in={isCreateFormOpen} unmountOnExit>
-          <CreateActualCostForm
-            onSuccess={() => setIsCreateFormOpen(false)}
-            plannedCostId={plannedCost.id}
-            plannedCostName={plannedCost.name}
-            projectFinanceId={plannedCost.projectFinanceId}
-          />
-        </Collapse>
+        {financeCapabilities.canCreateActualCost ? (
+          <Collapse in={showCreateActualCostAction && isCreateFormOpen} unmountOnExit>
+            <CreateActualCostForm
+              onSuccess={() => setIsCreateFormOpen(false)}
+              plannedCostId={plannedCost.id}
+              plannedCostName={plannedCost.name}
+              projectFinanceId={plannedCost.projectFinanceId}
+            />
+          </Collapse>
+        ) : null}
 
         {archiveError ? (
           <ErrorState
@@ -443,7 +494,7 @@ function ActualCostSection({
         actualCosts.length === 0 ? (
           <EmptyState
             action={
-              !isCreateFormOpen ? (
+              showCreateActualCostAction && !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -453,7 +504,11 @@ function ActualCostSection({
                 </Button>
               ) : undefined
             }
-            description="Actual outgoing costs have not been registered for this planned cost yet. Add the first factual cost to record the expense."
+            description={
+              financeCapabilities.canCreateActualCost
+                ? 'Actual outgoing costs have not been registered for this planned cost yet. Add the first factual cost to record the expense.'
+                : 'Actual outgoing costs have not been registered for this planned cost yet.'
+            }
             title="No actual costs yet"
           />
         ) : null}
@@ -465,6 +520,7 @@ function ActualCostSection({
             {actualCosts.map((actualCost) => (
               <ActualCostListItem
                 actualCost={actualCost}
+                canArchiveActualCost={financeCapabilities.canArchiveActualCost}
                 isArchiving={archivingId === actualCost.id}
                 key={actualCost.id}
                 onArchive={handleArchive}
@@ -479,10 +535,12 @@ function ActualCostSection({
 
 function ActualCostListItem({
   actualCost,
+  canArchiveActualCost,
   isArchiving,
   onArchive,
 }: {
   actualCost: ActualCost
+  canArchiveActualCost: boolean
   isArchiving: boolean
   onArchive: (actualCost: ActualCost) => Promise<void>
 }) {
@@ -536,13 +594,15 @@ function ActualCostListItem({
           </Stack>
         </Stack>
 
-        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-          <ArchiveActionButton
-            isArchived={isArchived}
-            isArchiving={isArchiving}
-            onClick={() => void onArchive(actualCost)}
-          />
-        </Stack>
+        {canArchiveActualCost ? (
+          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <ArchiveActionButton
+              isArchived={isArchived}
+              isArchiving={isArchiving}
+              onClick={() => void onArchive(actualCost)}
+            />
+          </Stack>
+        ) : null}
       </Stack>
     </Paper>
   )

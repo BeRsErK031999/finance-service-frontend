@@ -4,6 +4,8 @@ import { apiClient } from '../../../shared/api/http-client'
 import { parseApiError } from '../../../shared/api/parse-api-error'
 import type {
   CreateProjectFinanceRequest,
+  ProjectFinanceAccess,
+  ProjectFinanceGlobalAccess,
   ProjectFinance,
   ProjectFinanceListQuery,
   ProjectFinanceListResponse,
@@ -25,6 +27,22 @@ export async function getProjectFinanceById(
 ): Promise<ProjectFinance> {
   return requestWithParsedError(
     apiClient.get<ProjectFinance>(`/project-finances/${projectFinanceId}`),
+  )
+}
+
+export async function getProjectFinanceAccessForCurrentUser(
+  projectFinanceId: string,
+): Promise<ProjectFinanceAccess> {
+  return requestWithParsedError(
+    apiClient.get<ProjectFinanceAccess>(
+      `/project-finances/${projectFinanceId}/access-me`,
+    ),
+  )
+}
+
+export async function getProjectFinanceGlobalAccessForCurrentUser(): Promise<ProjectFinanceGlobalAccess> {
+  return requestWithParsedError(
+    apiClient.get<ProjectFinanceGlobalAccess>('/project-finances/access-me'),
   )
 }
 

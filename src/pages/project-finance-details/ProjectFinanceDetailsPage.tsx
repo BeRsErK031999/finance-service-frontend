@@ -6,9 +6,14 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Button, Collapse, Divider, Stack, Typography } from '@mui/material'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 
-import { useProjectFinanceDetailsQuery } from '../../entities/project-finance/api/project-finance.query'
+import {
+  useProjectFinanceAccessQuery,
+  useProjectFinanceDetailsQuery,
+} from '../../entities/project-finance/api/project-finance.query'
 import { EditProjectFinanceForm } from '../../features/project-finance/edit-project-finance/ui/EditProjectFinanceForm'
+import { getFinanceCapabilities } from '../../shared/access/finance-capabilities'
 import { formatDateTime, formatOptionalDateTime } from '../../shared/lib/format'
+import { AccessNotice } from '../../shared/ui/AccessNotice'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
 import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
@@ -22,7 +27,11 @@ import { SectionFinancePlanBlock } from '../../widgets/section-finance-plan-bloc
 export function ProjectFinanceDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const projectFinanceQuery = useProjectFinanceDetailsQuery(id)
+  const projectFinanceAccessQuery = useProjectFinanceAccessQuery(id)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const financeCapabilities = getFinanceCapabilities({
+    projectFinanceAccess: projectFinanceAccessQuery.data ?? null,
+  })
   const projectFinance = projectFinanceQuery.data
   const title = projectFinance?.name ?? 'Project finance details'
   const subtitle = projectFinance
@@ -47,6 +56,10 @@ export function ProjectFinanceDetailsPage() {
         subtitle={subtitle}
         title={title}
       />
+
+      {financeCapabilities.readOnlyReason && financeCapabilities.canViewProjectFinance ? (
+        <AccessNotice message={financeCapabilities.readOnlyReason} />
+      ) : null}
 
       {!id ? (
         <EmptyState
@@ -86,6 +99,33 @@ export function ProjectFinanceDetailsPage() {
       {id &&
       !projectFinanceQuery.isPending &&
       !projectFinanceQuery.isError &&
+      projectFinance &&
+      projectFinanceAccessQuery.isPending ? (
+        <LoadingState
+          description="Project finance access is loading from the backend."
+          title="Loading finance access"
+        />
+      ) : null}
+
+      {id &&
+      !projectFinanceQuery.isPending &&
+      !projectFinanceQuery.isError &&
+      projectFinance &&
+      projectFinanceAccessQuery.isError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => void projectFinanceAccessQuery.refetch()} variant="contained">
+              Retry
+            </Button>
+          }
+          description={projectFinanceAccessQuery.error.message}
+          title="Failed to load finance access"
+        />
+      ) : null}
+
+      {id &&
+      !projectFinanceQuery.isPending &&
+      !projectFinanceQuery.isError &&
       !projectFinance ? (
         <EmptyState
           description="Backend returned no ProjectFinance data for this route."
@@ -93,18 +133,36 @@ export function ProjectFinanceDetailsPage() {
         />
       ) : null}
 
-      {projectFinance ? (
+      {projectFinance &&
+      !projectFinanceAccessQuery.isPending &&
+      !projectFinanceAccessQuery.isError &&
+      !financeCapabilities.canViewProjectFinance ? (
+        <EmptyState
+          description={
+            financeCapabilities.readOnlyReason ??
+            'Current user access for this finance plan is not available.'
+          }
+          title="Finance access is denied"
+        />
+      ) : null}
+
+      {projectFinance &&
+      !projectFinanceAccessQuery.isPending &&
+      !projectFinanceAccessQuery.isError &&
+      financeCapabilities.canViewProjectFinance ? (
         <Stack spacing={4}>
           <SectionCard
             action={
-              <Button
-                disabled={projectFinance.state !== 'ACTIVE'}
-                onClick={() => setIsEditFormOpen((current) => !current)}
-                startIcon={<EditOutlinedIcon />}
-                variant="outlined"
-              >
-                {isEditFormOpen ? 'Hide form' : 'Edit'}
-              </Button>
+              financeCapabilities.canEditProjectFinance ? (
+                <Button
+                  disabled={projectFinance.state !== 'ACTIVE'}
+                  onClick={() => setIsEditFormOpen((current) => !current)}
+                  startIcon={<EditOutlinedIcon />}
+                  variant="outlined"
+                >
+                  {isEditFormOpen ? 'Hide form' : 'Edit'}
+                </Button>
+              ) : undefined
             }
             subtitle="Core metadata and backend-driven state for this project finance."
             title="Project finance overview"
@@ -146,19 +204,24 @@ export function ProjectFinanceDetailsPage() {
                 />
               </Stack>
 
-              <Collapse in={isEditFormOpen} unmountOnExit>
-                <EditProjectFinanceForm
-                  onCancel={() => setIsEditFormOpen(false)}
-                  onSuccess={() => setIsEditFormOpen(false)}
-                  projectFinance={projectFinance}
-                />
-              </Collapse>
+              {financeCapabilities.canEditProjectFinance ? (
+                <Collapse in={isEditFormOpen} unmountOnExit>
+                  <EditProjectFinanceForm
+                    onCancel={() => setIsEditFormOpen(false)}
+                    onSuccess={() => setIsEditFormOpen(false)}
+                    projectFinance={projectFinance}
+                  />
+                </Collapse>
+              ) : null}
             </Stack>
           </SectionCard>
 
           <ProjectFinanceSummaryBlock projectFinanceId={projectFinance.id} />
 
-          <SectionFinancePlanBlock projectFinanceId={projectFinance.id} />
+          <SectionFinancePlanBlock
+            financeCapabilities={financeCapabilities}
+            projectFinanceId={projectFinance.id}
+          />
         </Stack>
       ) : null}
     </PageContainer>

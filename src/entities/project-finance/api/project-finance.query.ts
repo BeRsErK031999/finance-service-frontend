@@ -7,6 +7,8 @@ import {
 import type { ApiError } from '../../../shared/types/api'
 import type {
   CreateProjectFinanceRequest,
+  ProjectFinanceAccess,
+  ProjectFinanceGlobalAccess,
   ProjectFinance,
   ProjectFinanceListQuery,
   ProjectFinanceListResponse,
@@ -14,6 +16,8 @@ import type {
 } from '../model/types'
 import {
   createProjectFinance,
+  getProjectFinanceAccessForCurrentUser,
+  getProjectFinanceGlobalAccessForCurrentUser,
   getProjectFinanceById,
   listProjectFinances,
   updateProjectFinance,
@@ -27,10 +31,20 @@ export const projectFinanceQueryKeys = {
   details: () => [...projectFinanceQueryKeys.all, 'detail'] as const,
   detail: (projectFinanceId: string) =>
     [...projectFinanceQueryKeys.details(), projectFinanceId] as const,
+  globalAccess: () => [...projectFinanceQueryKeys.all, 'global-access'] as const,
+  accesses: () => [...projectFinanceQueryKeys.all, 'access'] as const,
+  access: (projectFinanceId: string) =>
+    [...projectFinanceQueryKeys.accesses(), projectFinanceId] as const,
 }
 
-export function useProjectFinanceListQuery(query: ProjectFinanceListQuery = {}) {
+export function useProjectFinanceListQuery(
+  query: ProjectFinanceListQuery = {},
+  options: {
+    enabled?: boolean
+  } = {},
+) {
   return useQuery<ProjectFinanceListResponse, ApiError>({
+    enabled: options.enabled ?? true,
     queryKey: projectFinanceQueryKeys.list(query),
     queryFn: () => listProjectFinances(query),
   })
@@ -41,6 +55,21 @@ export function useProjectFinanceDetailsQuery(projectFinanceId?: string) {
     enabled: Boolean(projectFinanceId),
     queryKey: projectFinanceQueryKeys.detail(projectFinanceId ?? ''),
     queryFn: () => getProjectFinanceById(projectFinanceId ?? ''),
+  })
+}
+
+export function useProjectFinanceAccessQuery(projectFinanceId?: string) {
+  return useQuery<ProjectFinanceAccess, ApiError>({
+    enabled: Boolean(projectFinanceId),
+    queryKey: projectFinanceQueryKeys.access(projectFinanceId ?? ''),
+    queryFn: () => getProjectFinanceAccessForCurrentUser(projectFinanceId ?? ''),
+  })
+}
+
+export function useProjectFinanceGlobalAccessQuery() {
+  return useQuery<ProjectFinanceGlobalAccess, ApiError>({
+    queryKey: projectFinanceQueryKeys.globalAccess(),
+    queryFn: () => getProjectFinanceGlobalAccessForCurrentUser(),
   })
 }
 

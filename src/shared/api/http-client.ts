@@ -8,5 +8,10 @@ export const apiClient = axios.create({
   timeoutErrorMessage: 'Request timed out. Please try again.',
   headers: {
     Accept: 'application/json',
+    ...(appConfig.currentUserId === null
+      ? {}
+      : {
+          'x-user-id': appConfig.currentUserId,
+        }),
   },
 })

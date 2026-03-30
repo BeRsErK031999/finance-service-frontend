@@ -27,6 +27,7 @@ import { ChangePlannedPaymentStatusForm } from '../../features/planned-payment/c
 import { EditPlannedPaymentForm } from '../../features/planned-payment/edit-planned-payment/ui/EditPlannedPaymentForm'
 import { CreatePlannedPaymentForm } from '../../features/planned-payment/create-planned-payment/ui/CreatePlannedPaymentForm'
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
+import type { FinanceCapabilities } from '../../shared/access/finance-capabilities'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import {
   formatAmount,
@@ -44,6 +45,7 @@ import { LoadingState } from '../../shared/ui/LoadingState'
 
 interface PlannedPaymentBlockProps {
   availableSectionFinancePlans: SectionFinancePlan[]
+  financeCapabilities: FinanceCapabilities
   projectFinanceId: string
   sectionFinancePlanId: string
   sectionFinancePlanName: string
@@ -51,12 +53,14 @@ interface PlannedPaymentBlockProps {
 
 export function PlannedPaymentBlock({
   availableSectionFinancePlans,
+  financeCapabilities,
   projectFinanceId,
   sectionFinancePlanId,
   sectionFinancePlanName,
 }: PlannedPaymentBlockProps) {
   const plannedPaymentsQuery = usePlannedPayments(projectFinanceId)
   const archivePlannedPaymentMutation = useArchivePlannedPayment()
+  const canCreatePlannedPayment = financeCapabilities.canCreatePlannedPayment
   const plannedPayments = (plannedPaymentsQuery.data?.items ?? []).filter(
     (plannedPayment) =>
       plannedPayment.sectionFinancePlanIds.includes(sectionFinancePlanId),
@@ -100,22 +104,26 @@ export function PlannedPaymentBlock({
             </Typography>
           </Stack>
 
-          <Button
-            onClick={() => setIsCreateFormOpen((current) => !current)}
-            startIcon={<AddRoundedIcon />}
-            variant="contained"
-          >
-            {isCreateFormOpen ? 'Hide form' : 'Add payment'}
-          </Button>
+          {canCreatePlannedPayment ? (
+            <Button
+              onClick={() => setIsCreateFormOpen((current) => !current)}
+              startIcon={<AddRoundedIcon />}
+              variant="contained"
+            >
+              {isCreateFormOpen ? 'Hide form' : 'Add payment'}
+            </Button>
+          ) : null}
         </Stack>
 
-        <Collapse in={isCreateFormOpen} unmountOnExit>
-          <CreatePlannedPaymentForm
-            projectFinanceId={projectFinanceId}
-            sectionFinancePlanId={sectionFinancePlanId}
-            sectionFinancePlanName={sectionFinancePlanName}
-          />
-        </Collapse>
+        {canCreatePlannedPayment ? (
+          <Collapse in={isCreateFormOpen} unmountOnExit>
+            <CreatePlannedPaymentForm
+              projectFinanceId={projectFinanceId}
+              sectionFinancePlanId={sectionFinancePlanId}
+              sectionFinancePlanName={sectionFinancePlanName}
+            />
+          </Collapse>
+        ) : null}
 
         {archiveError ? (
           <ErrorState
@@ -148,7 +156,7 @@ export function PlannedPaymentBlock({
         plannedPayments.length === 0 ? (
           <EmptyState
             action={
-              !isCreateFormOpen ? (
+              canCreatePlannedPayment && !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -158,7 +166,11 @@ export function PlannedPaymentBlock({
                 </Button>
               ) : undefined
             }
-            description="No planned payments are linked to this section yet. Create the first planned incoming movement here."
+            description={
+              canCreatePlannedPayment
+                ? 'No planned payments are linked to this section yet. Create the first planned incoming movement here.'
+                : 'No planned payments are linked to this section yet.'
+            }
             title="No planned payments yet"
           />
         ) : null}
@@ -170,6 +182,7 @@ export function PlannedPaymentBlock({
             {plannedPayments.map((plannedPayment) => (
               <PlannedPaymentListItem
                 availableSectionFinancePlans={availableSectionFinancePlans}
+                financeCapabilities={financeCapabilities}
                 isArchiving={archivingId === plannedPayment.id}
                 key={plannedPayment.id}
                 onArchive={handleArchive}
@@ -185,11 +198,13 @@ export function PlannedPaymentBlock({
 
 function PlannedPaymentListItem({
   availableSectionFinancePlans,
+  financeCapabilities,
   isArchiving,
   onArchive,
   plannedPayment,
 }: {
   availableSectionFinancePlans: SectionFinancePlan[]
+  financeCapabilities: FinanceCapabilities
   isArchiving: boolean
   onArchive: (plannedPayment: PlannedPayment) => Promise<void>
   plannedPayment: PlannedPayment
@@ -205,6 +220,7 @@ function PlannedPaymentListItem({
     (actualPayment) => actualPayment.state === 'ACTIVE',
   )
   const showStatusChangeAction =
+    financeCapabilities.canChangePlannedPaymentStatus &&
     !isArchived &&
     plannedPayment.status === 'RECEIVED' &&
     hasActiveActualPayment
@@ -214,7 +230,15 @@ function PlannedPaymentListItem({
     isActualPaymentsPending: actualPaymentsQuery.isPending,
     plannedPaymentStatus: plannedPayment.status,
   })
-  const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
+  const canEditPlannedPayment = financeCapabilities.canEditPlannedPayment
+  const canArchivePlannedPayment = financeCapabilities.canArchivePlannedPayment
+  const isEditFormVisible =
+    canEditPlannedPayment &&
+    !isArchived &&
+    editAvailabilityReason === null &&
+    isEditFormOpen
+  const showActions =
+    showStatusChangeAction || canEditPlannedPayment || canArchivePlannedPayment
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
@@ -289,39 +313,47 @@ function PlannedPaymentListItem({
             </Stack>
           </Stack>
 
-          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-            {showStatusChangeAction ? (
-              <Button
-                onClick={() => setIsStatusFormOpen((current) => !current)}
-                startIcon={<SyncAltRoundedIcon />}
-                variant="outlined"
-              >
-                {isStatusFormOpen ? 'Hide status action' : 'Change status'}
-              </Button>
-            ) : null}
-            <Button
-              disabled={isArchived || editAvailabilityReason !== null}
-              onClick={() => setIsEditFormOpen((current) => !current)}
-              startIcon={<EditOutlinedIcon />}
-              variant="outlined"
-            >
-              {isEditFormVisible ? 'Hide form' : 'Edit'}
-            </Button>
-            {editAvailabilityReason ? (
-              <Typography
-                color="text.secondary"
-                sx={{ maxWidth: 240 }}
-                variant="caption"
-              >
-                {editAvailabilityReason}
-              </Typography>
-            ) : null}
-            <ArchiveActionButton
-              isArchived={isArchived}
-              isArchiving={isArchiving}
-              onClick={() => void onArchive(plannedPayment)}
-            />
-          </Stack>
+          {showActions ? (
+            <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+              {showStatusChangeAction ? (
+                <Button
+                  onClick={() => setIsStatusFormOpen((current) => !current)}
+                  startIcon={<SyncAltRoundedIcon />}
+                  variant="outlined"
+                >
+                  {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+                </Button>
+              ) : null}
+              {canEditPlannedPayment ? (
+                <>
+                  <Button
+                    disabled={isArchived || editAvailabilityReason !== null}
+                    onClick={() => setIsEditFormOpen((current) => !current)}
+                    startIcon={<EditOutlinedIcon />}
+                    variant="outlined"
+                  >
+                    {isEditFormVisible ? 'Hide form' : 'Edit'}
+                  </Button>
+                  {editAvailabilityReason ? (
+                    <Typography
+                      color="text.secondary"
+                      sx={{ maxWidth: 240 }}
+                      variant="caption"
+                    >
+                      {editAvailabilityReason}
+                    </Typography>
+                  ) : null}
+                </>
+              ) : null}
+              {canArchivePlannedPayment ? (
+                <ArchiveActionButton
+                  isArchived={isArchived}
+                  isArchiving={isArchiving}
+                  onClick={() => void onArchive(plannedPayment)}
+                />
+              ) : null}
+            </Stack>
+          ) : null}
         </Stack>
 
         <Collapse in={showStatusChangeAction && isStatusFormOpen} unmountOnExit>
@@ -332,24 +364,31 @@ function PlannedPaymentListItem({
           />
         </Collapse>
 
-        <Collapse in={isEditFormVisible} unmountOnExit>
-          <EditPlannedPaymentForm
-            availableSectionFinancePlans={availableSectionFinancePlans}
-            onCancel={() => setIsEditFormOpen(false)}
-            onSuccess={() => setIsEditFormOpen(false)}
-            plannedPayment={plannedPayment}
-          />
-        </Collapse>
+        {canEditPlannedPayment ? (
+          <Collapse in={isEditFormVisible} unmountOnExit>
+            <EditPlannedPaymentForm
+              availableSectionFinancePlans={availableSectionFinancePlans}
+              onCancel={() => setIsEditFormOpen(false)}
+              onSuccess={() => setIsEditFormOpen(false)}
+              plannedPayment={plannedPayment}
+            />
+          </Collapse>
+        ) : null}
 
-        <ActualPaymentSection plannedPayment={plannedPayment} />
+        <ActualPaymentSection
+          financeCapabilities={financeCapabilities}
+          plannedPayment={plannedPayment}
+        />
       </Stack>
     </Paper>
   )
 }
 
 function ActualPaymentSection({
+  financeCapabilities,
   plannedPayment,
 }: {
+  financeCapabilities: FinanceCapabilities
   plannedPayment: PlannedPayment
 }) {
   const actualPaymentsQuery = useActualPayments({
@@ -357,6 +396,16 @@ function ActualPaymentSection({
   })
   const archiveActualPaymentMutation = useArchiveActualPayment()
   const actualPayments = actualPaymentsQuery.data?.items ?? []
+  const hasActiveActualPayment = actualPayments.some(
+    (actualPayment) => actualPayment.state === 'ACTIVE',
+  )
+  const canCreateActualPayment =
+    !actualPaymentsQuery.isPending &&
+    !actualPaymentsQuery.isError &&
+    plannedPayment.state === 'ACTIVE' &&
+    !hasActiveActualPayment
+  const showCreateActualPaymentAction =
+    financeCapabilities.canCreateActualPayment && canCreateActualPayment
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
@@ -399,7 +448,7 @@ function ActualPaymentSection({
             </Typography>
           </Stack>
 
-          {actualPayments.length === 0 ? (
+          {showCreateActualPaymentAction ? (
             <Button
               onClick={() => setIsCreateFormOpen((current) => !current)}
               startIcon={<AddRoundedIcon />}
@@ -410,14 +459,16 @@ function ActualPaymentSection({
           ) : null}
         </Stack>
 
-        <Collapse in={isCreateFormOpen} unmountOnExit>
-          <CreateActualPaymentForm
-            onSuccess={() => setIsCreateFormOpen(false)}
-            plannedPaymentId={plannedPayment.id}
-            plannedPaymentName={plannedPayment.name}
-            projectFinanceId={plannedPayment.projectFinanceId}
-          />
-        </Collapse>
+        {financeCapabilities.canCreateActualPayment ? (
+          <Collapse in={showCreateActualPaymentAction && isCreateFormOpen} unmountOnExit>
+            <CreateActualPaymentForm
+              onSuccess={() => setIsCreateFormOpen(false)}
+              plannedPaymentId={plannedPayment.id}
+              plannedPaymentName={plannedPayment.name}
+              projectFinanceId={plannedPayment.projectFinanceId}
+            />
+          </Collapse>
+        ) : null}
 
         {archiveError ? (
           <ErrorState
@@ -450,7 +501,7 @@ function ActualPaymentSection({
         actualPayments.length === 0 ? (
           <EmptyState
             action={
-              !isCreateFormOpen ? (
+              showCreateActualPaymentAction && !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -460,7 +511,11 @@ function ActualPaymentSection({
                 </Button>
               ) : undefined
             }
-            description="Actual incoming payments have not been registered for this planned payment yet. Add the first factual payment to record receipt."
+            description={
+              financeCapabilities.canCreateActualPayment
+                ? 'Actual incoming payments have not been registered for this planned payment yet. Add the first factual payment to record receipt.'
+                : 'Actual incoming payments have not been registered for this planned payment yet.'
+            }
             title="No actual payments yet"
           />
         ) : null}
@@ -472,6 +527,7 @@ function ActualPaymentSection({
             {actualPayments.map((actualPayment) => (
               <ActualPaymentListItem
                 actualPayment={actualPayment}
+                canArchiveActualPayment={financeCapabilities.canArchiveActualPayment}
                 isArchiving={archivingId === actualPayment.id}
                 key={actualPayment.id}
                 onArchive={handleArchive}
@@ -486,10 +542,12 @@ function ActualPaymentSection({
 
 function ActualPaymentListItem({
   actualPayment,
+  canArchiveActualPayment,
   isArchiving,
   onArchive,
 }: {
   actualPayment: ActualPayment
+  canArchiveActualPayment: boolean
   isArchiving: boolean
   onArchive: (actualPayment: ActualPayment) => Promise<void>
 }) {
@@ -543,13 +601,15 @@ function ActualPaymentListItem({
           </Stack>
         </Stack>
 
-        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-          <ArchiveActionButton
-            isArchived={isArchived}
-            isArchiving={isArchiving}
-            onClick={() => void onArchive(actualPayment)}
-          />
-        </Stack>
+        {canArchiveActualPayment ? (
+          <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            <ArchiveActionButton
+              isArchived={isArchived}
+              isArchiving={isArchiving}
+              onClick={() => void onArchive(actualPayment)}
+            />
+          </Stack>
+        ) : null}
       </Stack>
     </Paper>
   )
