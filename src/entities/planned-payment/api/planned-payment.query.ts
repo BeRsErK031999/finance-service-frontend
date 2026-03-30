@@ -6,6 +6,7 @@ import {
 
 import type { ApiError } from '../../../shared/types/api'
 import type {
+  ChangePlannedPaymentStatusRequest,
   CreatePlannedPaymentRequest,
   PlannedPayment,
   PlannedPaymentListResponse,
@@ -13,6 +14,7 @@ import type {
 } from '../model/types'
 import {
   archivePlannedPayment,
+  changePlannedPaymentStatus,
   createPlannedPayment,
   listPlannedPayments,
   updatePlannedPayment,
@@ -72,6 +74,23 @@ export function useUpdatePlannedPayment(id: string) {
     onSuccess: (plannedPayment) => {
       void queryClient.invalidateQueries({
         queryKey: plannedPaymentKeys.list(plannedPayment.projectFinanceId),
+      })
+    },
+  })
+}
+
+export function useChangePlannedPaymentStatus(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<PlannedPayment, ApiError, ChangePlannedPaymentStatusRequest>({
+    mutationFn: (payload: ChangePlannedPaymentStatusRequest) =>
+      changePlannedPaymentStatus(id, payload),
+    onSuccess: (plannedPayment) => {
+      void queryClient.invalidateQueries({
+        queryKey: plannedPaymentKeys.list(plannedPayment.projectFinanceId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: ['actual-payments', 'list'],
       })
     },
   })

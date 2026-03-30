@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import SyncAltRoundedIcon from '@mui/icons-material/SyncAltRounded'
 import {
   Button,
   Chip,
@@ -22,6 +23,7 @@ import {
 } from '../../entities/planned-payment/api/planned-payment.query'
 import type { PlannedPayment } from '../../entities/planned-payment/model/types'
 import { CreateActualPaymentForm } from '../../features/actual-payment/create-actual-payment/ui/CreateActualPaymentForm'
+import { ChangePlannedPaymentStatusForm } from '../../features/planned-payment/change-planned-payment-status/ui/ChangePlannedPaymentStatusForm'
 import { EditPlannedPaymentForm } from '../../features/planned-payment/edit-planned-payment/ui/EditPlannedPaymentForm'
 import { CreatePlannedPaymentForm } from '../../features/planned-payment/create-planned-payment/ui/CreatePlannedPaymentForm'
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
@@ -197,11 +199,20 @@ function PlannedPaymentListItem({
   })
   const actualPayments = actualPaymentsQuery.data?.items ?? []
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isStatusFormOpen, setIsStatusFormOpen] = useState(false)
   const isArchived = plannedPayment.state !== 'ACTIVE'
+  const hasActiveActualPayment = actualPayments.some(
+    (actualPayment) => actualPayment.state === 'ACTIVE',
+  )
+  const showStatusChangeAction =
+    !isArchived &&
+    plannedPayment.status === 'RECEIVED' &&
+    hasActiveActualPayment
   const editAvailabilityReason = getPlannedPaymentEditAvailabilityReason({
     actualPayments,
     hasActualPaymentsError: actualPaymentsQuery.isError,
     isActualPaymentsPending: actualPaymentsQuery.isPending,
+    plannedPaymentStatus: plannedPayment.status,
   })
   const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
 
@@ -279,6 +290,15 @@ function PlannedPaymentListItem({
           </Stack>
 
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            {showStatusChangeAction ? (
+              <Button
+                onClick={() => setIsStatusFormOpen((current) => !current)}
+                startIcon={<SyncAltRoundedIcon />}
+                variant="outlined"
+              >
+                {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+              </Button>
+            ) : null}
             <Button
               disabled={isArchived || editAvailabilityReason !== null}
               onClick={() => setIsEditFormOpen((current) => !current)}
@@ -303,6 +323,14 @@ function PlannedPaymentListItem({
             />
           </Stack>
         </Stack>
+
+        <Collapse in={showStatusChangeAction && isStatusFormOpen} unmountOnExit>
+          <ChangePlannedPaymentStatusForm
+            onCancel={() => setIsStatusFormOpen(false)}
+            onSuccess={() => setIsStatusFormOpen(false)}
+            plannedPayment={plannedPayment}
+          />
+        </Collapse>
 
         <Collapse in={isEditFormVisible} unmountOnExit>
           <EditPlannedPaymentForm
@@ -585,10 +613,12 @@ function getPlannedPaymentEditAvailabilityReason({
   actualPayments,
   hasActualPaymentsError,
   isActualPaymentsPending,
+  plannedPaymentStatus,
 }: {
   actualPayments: ActualPayment[]
   hasActualPaymentsError: boolean
   isActualPaymentsPending: boolean
+  plannedPaymentStatus: PlannedPayment['status']
 }) {
   if (isActualPaymentsPending) {
     return 'Checking actual payments before enabling edit.'
@@ -599,6 +629,10 @@ function getPlannedPaymentEditAvailabilityReason({
   }
 
   if (actualPayments.some((actualPayment) => actualPayment.state === 'ACTIVE')) {
+    if (plannedPaymentStatus === 'RECEIVED') {
+      return 'Full edit is locked while an active actual payment exists. Use status change to archive it first.'
+    }
+
     return 'Archive the active actual payment to edit this planned payment.'
   }
 

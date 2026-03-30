@@ -15,6 +15,14 @@ export const PLANNED_PAYMENT_STATUSES = [
 
 export type PlannedPaymentStatus = (typeof PLANNED_PAYMENT_STATUSES)[number]
 
+export const PLANNED_PAYMENT_STATUS_CHANGE_TARGETS = [
+  'PLANNED',
+  'EXPECTED',
+] as const
+
+export type PlannedPaymentStatusChangeTarget =
+  (typeof PLANNED_PAYMENT_STATUS_CHANGE_TARGETS)[number]
+
 export const PLANNED_PAYMENT_STATES = [
   'ACTIVE',
   'ARCHIVED',
@@ -70,5 +78,10 @@ export interface UpdatePlannedPaymentRequest {
   sectionFinancePlanIds: string[]
   projectEventIds?: string[]
   sectionEventIds?: string[]
+  version: number
+}
+
+export interface ChangePlannedPaymentStatusRequest {
+  status: PlannedPaymentStatusChangeTarget
   version: number
 }

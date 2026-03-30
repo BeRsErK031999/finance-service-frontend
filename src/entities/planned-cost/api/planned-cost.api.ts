@@ -3,6 +3,7 @@ import type { AxiosResponse } from 'axios'
 import { apiClient } from '../../../shared/api/http-client'
 import { parseApiError } from '../../../shared/api/parse-api-error'
 import type {
+  ChangePlannedCostStatusRequest,
   CreatePlannedCostRequest,
   PlannedCost,
   PlannedCostListQuery,
@@ -40,6 +41,15 @@ export async function updatePlannedCost(
 ): Promise<PlannedCost> {
   return requestWithParsedError(
     apiClient.patch<PlannedCost>(`/planned-costs/${id}`, payload),
+  )
+}
+
+export async function changePlannedCostStatus(
+  id: string,
+  payload: ChangePlannedCostStatusRequest,
+): Promise<PlannedCost> {
+  return requestWithParsedError(
+    apiClient.patch<PlannedCost>(`/planned-costs/${id}/status`, payload),
   )
 }
 

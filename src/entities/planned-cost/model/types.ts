@@ -12,6 +12,14 @@ export const PLANNED_COST_STATUSES = [
 
 export type PlannedCostStatus = (typeof PLANNED_COST_STATUSES)[number]
 
+export const PLANNED_COST_STATUS_CHANGE_TARGETS = [
+  'PLANNED',
+  'EXPECTED',
+] as const
+
+export type PlannedCostStatusChangeTarget =
+  (typeof PLANNED_COST_STATUS_CHANGE_TARGETS)[number]
+
 export const PLANNED_COST_STATES = ['ACTIVE', 'ARCHIVED', 'DELETED'] as const
 
 export type PlannedCostState = (typeof PLANNED_COST_STATES)[number]
@@ -63,5 +71,10 @@ export interface UpdatePlannedCostRequest {
   sectionFinancePlanIds: string[]
   projectEventIds?: string[]
   sectionEventIds?: string[]
+  version: number
+}
+
+export interface ChangePlannedCostStatusRequest {
+  status: PlannedCostStatusChangeTarget
   version: number
 }

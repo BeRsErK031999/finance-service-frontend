@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import SyncAltRoundedIcon from '@mui/icons-material/SyncAltRounded'
 import {
   Button,
   Chip,
@@ -22,6 +23,7 @@ import {
 } from '../../entities/planned-cost/api/planned-cost.query'
 import type { PlannedCost } from '../../entities/planned-cost/model/types'
 import { CreateActualCostForm } from '../../features/actual-cost/create-actual-cost/ui/CreateActualCostForm'
+import { ChangePlannedCostStatusForm } from '../../features/planned-cost/change-planned-cost-status/ui/ChangePlannedCostStatusForm'
 import { EditPlannedCostForm } from '../../features/planned-cost/edit-planned-cost/ui/EditPlannedCostForm'
 import { CreatePlannedCostForm } from '../../features/planned-cost/create-planned-cost/ui/CreatePlannedCostForm'
 import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
@@ -194,11 +196,18 @@ function PlannedCostListItem({
   })
   const actualCosts = actualCostsQuery.data?.items ?? []
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [isStatusFormOpen, setIsStatusFormOpen] = useState(false)
   const isArchived = plannedCost.state !== 'ACTIVE'
+  const hasActiveActualCost = actualCosts.some(
+    (actualCost) => actualCost.state === 'ACTIVE',
+  )
+  const showStatusChangeAction =
+    !isArchived && plannedCost.status === 'RECEIVED' && hasActiveActualCost
   const editAvailabilityReason = getPlannedCostEditAvailabilityReason({
     actualCosts,
     hasActualCostsError: actualCostsQuery.isError,
     isActualCostsPending: actualCostsQuery.isPending,
+    plannedCostStatus: plannedCost.status,
   })
   const isEditFormVisible = !isArchived && editAvailabilityReason === null && isEditFormOpen
 
@@ -276,6 +285,15 @@ function PlannedCostListItem({
           </Stack>
 
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+            {showStatusChangeAction ? (
+              <Button
+                onClick={() => setIsStatusFormOpen((current) => !current)}
+                startIcon={<SyncAltRoundedIcon />}
+                variant="outlined"
+              >
+                {isStatusFormOpen ? 'Hide status action' : 'Change status'}
+              </Button>
+            ) : null}
             <Button
               disabled={isArchived || editAvailabilityReason !== null}
               onClick={() => setIsEditFormOpen((current) => !current)}
@@ -300,6 +318,14 @@ function PlannedCostListItem({
             />
           </Stack>
         </Stack>
+
+        <Collapse in={showStatusChangeAction && isStatusFormOpen} unmountOnExit>
+          <ChangePlannedCostStatusForm
+            onCancel={() => setIsStatusFormOpen(false)}
+            onSuccess={() => setIsStatusFormOpen(false)}
+            plannedCost={plannedCost}
+          />
+        </Collapse>
 
         <Collapse in={isEditFormVisible} unmountOnExit>
           <EditPlannedCostForm
@@ -580,10 +606,12 @@ function getPlannedCostEditAvailabilityReason({
   actualCosts,
   hasActualCostsError,
   isActualCostsPending,
+  plannedCostStatus,
 }: {
   actualCosts: ActualCost[]
   hasActualCostsError: boolean
   isActualCostsPending: boolean
+  plannedCostStatus: PlannedCost['status']
 }) {
   if (isActualCostsPending) {
     return 'Checking actual costs before enabling edit.'
@@ -594,6 +622,10 @@ function getPlannedCostEditAvailabilityReason({
   }
 
   if (actualCosts.some((actualCost) => actualCost.state === 'ACTIVE')) {
+    if (plannedCostStatus === 'RECEIVED') {
+      return 'Full edit is locked while an active actual cost exists. Use status change to archive it first.'
+    }
+
     return 'Archive the active actual cost to edit this planned cost.'
   }
 
