@@ -7,6 +7,7 @@ import {
   Button,
   Chip,
   Collapse,
+  Divider,
   Paper,
   Stack,
   Typography,
@@ -22,11 +23,11 @@ import {
   usePlannedPayments,
 } from '../../entities/planned-payment/api/planned-payment.query'
 import type { PlannedPayment } from '../../entities/planned-payment/model/types'
+import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
 import { CreateActualPaymentForm } from '../../features/actual-payment/create-actual-payment/ui/CreateActualPaymentForm'
 import { ChangePlannedPaymentStatusForm } from '../../features/planned-payment/change-planned-payment-status/ui/ChangePlannedPaymentStatusForm'
-import { EditPlannedPaymentForm } from '../../features/planned-payment/edit-planned-payment/ui/EditPlannedPaymentForm'
 import { CreatePlannedPaymentForm } from '../../features/planned-payment/create-planned-payment/ui/CreatePlannedPaymentForm'
-import type { SectionFinancePlan } from '../../entities/section-finance-plan/model/types'
+import { EditPlannedPaymentForm } from '../../features/planned-payment/edit-planned-payment/ui/EditPlannedPaymentForm'
 import type { FinanceCapabilities } from '../../shared/access/finance-capabilities'
 import { parseApiError } from '../../shared/api/parse-api-error'
 import {
@@ -37,11 +38,14 @@ import {
   formatOptionalDateTime,
 } from '../../shared/lib/format'
 import type { ApiError } from '../../shared/types/api'
+import { ActionAvailabilityHint } from '../../shared/ui/ActionAvailabilityHint'
 import { ArchiveActionButton } from '../../shared/ui/ArchiveActionButton'
+import { CollapsibleSectionCard } from '../../shared/ui/CollapsibleSectionCard'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
 import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
+import { TechnicalDetailsSection } from '../../shared/ui/TechnicalDetailsSection'
 
 interface PlannedPaymentBlockProps {
   availableSectionFinancePlans: SectionFinancePlan[]
@@ -65,9 +69,17 @@ export function PlannedPaymentBlock({
     (plannedPayment) =>
       plannedPayment.sectionFinancePlanIds.includes(sectionFinancePlanId),
   )
+  const totalAmount = plannedPayments.reduce(
+    (total, plannedPayment) => total + toNumericAmount(plannedPayment.amount),
+    0,
+  )
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
+  const createReason = canCreatePlannedPayment
+    ? 'Можно добавить новое плановое поступление для этого раздела.'
+    : financeCapabilities.readOnlyReason ??
+      'Создавать плановые поступления можно только с правом редактирования.'
 
   const handleArchive = async (plannedPayment: PlannedPayment) => {
     if (
@@ -89,32 +101,32 @@ export function PlannedPaymentBlock({
   }
 
   return (
-    <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
-      <Stack spacing={3}>
-        <Stack
-          alignItems={{ xs: 'flex-start', md: 'center' }}
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          spacing={2}
-        >
-          <Stack spacing={0.5}>
-            <Typography variant="h6">Плановые поступления</Typography>
-            <Typography color="text.secondary">
-              Здесь показаны ожидаемые поступления, связанные с этим разделом.
-            </Typography>
-          </Stack>
-
-          {canCreatePlannedPayment ? (
-            <Button
-              onClick={() => setIsCreateFormOpen((current) => !current)}
-              startIcon={<AddRoundedIcon />}
-              variant="contained"
-            >
-              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить поступление'}
-            </Button>
-          ) : null}
+    <CollapsibleSectionCard
+      actions={
+        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+          <Button
+            disabled={!canCreatePlannedPayment}
+            onClick={() => setIsCreateFormOpen((current) => !current)}
+            startIcon={<AddRoundedIcon />}
+            variant="contained"
+          >
+            {isCreateFormOpen ? 'Скрыть форму' : 'Добавить поступление'}
+          </Button>
+          <ActionAvailabilityHint message={createReason} />
         </Stack>
-
+      }
+      defaultExpanded={false}
+      subtitle="Ожидаемые поступления, связанные с этим разделом."
+      summary={
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
+          <SummaryBadge label="Записей" value={String(plannedPayments.length)} />
+          <SummaryBadge label="Сумма" value={formatAmount(totalAmount)} />
+        </Stack>
+      }
+      surface="paper"
+      title="Плановые поступления"
+    >
+      <Stack spacing={3}>
         {canCreatePlannedPayment ? (
           <Collapse in={isCreateFormOpen} unmountOnExit>
             <CreatePlannedPaymentForm
@@ -192,7 +204,7 @@ export function PlannedPaymentBlock({
           </Stack>
         ) : null}
       </Stack>
-    </Paper>
+    </CollapsibleSectionCard>
   )
 }
 
@@ -219,142 +231,102 @@ function PlannedPaymentListItem({
   const hasActiveActualPayment = actualPayments.some(
     (actualPayment) => actualPayment.state === 'ACTIVE',
   )
-  const showStatusChangeAction =
-    financeCapabilities.canChangePlannedPaymentStatus &&
-    !isArchived &&
-    plannedPayment.status === 'RECEIVED' &&
-    hasActiveActualPayment
+  const canEditPlannedPayment = financeCapabilities.canEditPlannedPayment
+  const canArchivePlannedPayment = financeCapabilities.canArchivePlannedPayment
+  const canChangeStatus = financeCapabilities.canChangePlannedPaymentStatus
   const editAvailabilityReason = getPlannedPaymentEditAvailabilityReason({
     actualPayments,
     hasActualPaymentsError: actualPaymentsQuery.isError,
     isActualPaymentsPending: actualPaymentsQuery.isPending,
     plannedPaymentStatus: plannedPayment.status,
   })
-  const canEditPlannedPayment = financeCapabilities.canEditPlannedPayment
-  const canArchivePlannedPayment = financeCapabilities.canArchivePlannedPayment
-  const isEditFormVisible =
-    canEditPlannedPayment &&
+  const canOpenEditForm =
+    canEditPlannedPayment && !isArchived && editAvailabilityReason === null
+  const showStatusChangeAction =
+    canChangeStatus &&
     !isArchived &&
-    editAvailabilityReason === null &&
-    isEditFormOpen
-  const showActions =
-    showStatusChangeAction || canEditPlannedPayment || canArchivePlannedPayment
+    plannedPayment.status === 'RECEIVED' &&
+    hasActiveActualPayment
+  const actionHint = getPlannedPaymentActionHint({
+    canArchivePlannedPayment,
+    canEditPlannedPayment,
+    editAvailabilityReason,
+    isArchived,
+    readOnlyReason: financeCapabilities.readOnlyReason,
+  })
 
   return (
-    <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
-      <Stack spacing={3}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          spacing={3}
-        >
-          <Stack spacing={1.5} sx={{ flex: 1 }}>
-            <Stack
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              direction={{ xs: 'column', sm: 'row' }}
-              flexWrap="wrap"
-              spacing={1}
+    <CollapsibleSectionCard
+      actions={
+        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {canChangeStatus || plannedPayment.status === 'RECEIVED' ? (
+              <Button
+                disabled={!showStatusChangeAction}
+                onClick={() => setIsStatusFormOpen((current) => !current)}
+                startIcon={<SyncAltRoundedIcon />}
+                variant="outlined"
+              >
+                {isStatusFormOpen ? 'Скрыть форму' : 'Изменить статус'}
+              </Button>
+            ) : null}
+            <Button
+              disabled={!canOpenEditForm}
+              onClick={() => setIsEditFormOpen((current) => !current)}
+              startIcon={<EditOutlinedIcon />}
+              variant="outlined"
             >
-              <Typography variant="subtitle1">{plannedPayment.name}</Typography>
-              <FinanceStatusChip value={plannedPayment.status} />
-              <FinanceStatusChip value={plannedPayment.state} />
-            </Stack>
-
-            <Typography color="text.secondary" variant="body2">
-              Сумма: {formatAmount(plannedPayment.amount)}
-            </Typography>
-
-            {plannedPayment.conditionSource === 'DATE' ? (
-              <Typography color="text.secondary" variant="body2">
-                Плановая дата: {formatOptionalDate(plannedPayment.plannedDate)}
-              </Typography>
-            ) : (
-              <Stack spacing={1}>
-                <Typography color="text.secondary" variant="body2">
-                  Поступление ожидается только после того, как произойдут все выбранные проектные события и события раздела.
-                </Typography>
-                {plannedPayment.projectEventIds.length > 0 ? (
-                  <IdentifierGroup
-                    label="Проектные события"
-                    values={plannedPayment.projectEventIds}
-                  />
-                ) : null}
-                {plannedPayment.sectionEventIds.length > 0 ? (
-                  <IdentifierGroup
-                    label="События раздела"
-                    values={plannedPayment.sectionEventIds}
-                  />
-                ) : null}
-              </Stack>
-            )}
-
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              sx={{ flexWrap: 'wrap' }}
-            >
-              <MetaItem label="Версия" value={String(plannedPayment.version)} />
-              <MetaItem
-                label="Создано"
-                value={formatDateTime(plannedPayment.createdAt)}
-              />
-              <MetaItem
-                label="Обновлено"
-                value={formatDateTime(plannedPayment.updatedAt)}
-              />
-              <MetaItem
-                label="Фактическая дата"
-                value={formatOptionalDate(plannedPayment.actualDate)}
-              />
-              <MetaItem
-                label="В архиве с"
-                value={formatOptionalDateTime(plannedPayment.archivedAt)}
-              />
-            </Stack>
+              {isEditFormOpen ? 'Скрыть форму' : 'Редактировать'}
+            </Button>
+            <ArchiveActionButton
+              disabled={!canArchivePlannedPayment}
+              isArchived={isArchived}
+              isArchiving={isArchiving}
+              onClick={() => void onArchive(plannedPayment)}
+            />
           </Stack>
-
-          {showActions ? (
-            <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
-              {showStatusChangeAction ? (
-                <Button
-                  onClick={() => setIsStatusFormOpen((current) => !current)}
-                  startIcon={<SyncAltRoundedIcon />}
-                  variant="outlined"
-                >
-                  {isStatusFormOpen ? 'Скрыть форму' : 'Изменить статус'}
-                </Button>
-              ) : null}
-              {canEditPlannedPayment ? (
-                <>
-                  <Button
-                    disabled={isArchived || editAvailabilityReason !== null}
-                    onClick={() => setIsEditFormOpen((current) => !current)}
-                    startIcon={<EditOutlinedIcon />}
-                    variant="outlined"
-                  >
-                    {isEditFormVisible ? 'Скрыть форму' : 'Редактировать'}
-                  </Button>
-                  {editAvailabilityReason ? (
-                    <Typography
-                      color="text.secondary"
-                      sx={{ maxWidth: 240 }}
-                      variant="caption"
-                    >
-                      {editAvailabilityReason}
-                    </Typography>
-                  ) : null}
-                </>
-              ) : null}
-              {canArchivePlannedPayment ? (
-                <ArchiveActionButton
-                  isArchived={isArchived}
-                  isArchiving={isArchiving}
-                  onClick={() => void onArchive(plannedPayment)}
-                />
-              ) : null}
-            </Stack>
-          ) : null}
+          <ActionAvailabilityHint message={actionHint} />
         </Stack>
+      }
+      contentSx={{ pt: 3 }}
+      defaultExpanded={false}
+      summary={
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
+            <SummaryBadge label="Сумма" value={formatAmount(plannedPayment.amount)} />
+            <FinanceStatusChip value={plannedPayment.status} />
+            <FinanceStatusChip value={plannedPayment.state} />
+          </Stack>
+          <Typography color="text.secondary" variant="body2">
+            {getPlannedPaymentConditionPreview(plannedPayment)}
+          </Typography>
+        </Stack>
+      }
+      surface="paper"
+      title={plannedPayment.name}
+    >
+      <Stack spacing={3}>
+        <DetailedPlannedPaymentCondition plannedPayment={plannedPayment} />
+
+        <Paper sx={{ p: 2 }} variant="outlined">
+          <Stack spacing={0.5}>
+            <Typography color="text.secondary" variant="caption">
+              Фактическая дата
+            </Typography>
+            <Typography variant="body2">
+              {formatOptionalDate(plannedPayment.actualDate, 'Факт пока не зафиксирован')}
+            </Typography>
+          </Stack>
+        </Paper>
+
+        <Collapse in={isEditFormOpen && canOpenEditForm} unmountOnExit>
+          <EditPlannedPaymentForm
+            availableSectionFinancePlans={availableSectionFinancePlans}
+            onCancel={() => setIsEditFormOpen(false)}
+            onSuccess={() => setIsEditFormOpen(false)}
+            plannedPayment={plannedPayment}
+          />
+        </Collapse>
 
         <Collapse in={showStatusChangeAction && isStatusFormOpen} unmountOnExit>
           <ChangePlannedPaymentStatusForm
@@ -364,48 +336,76 @@ function PlannedPaymentListItem({
           />
         </Collapse>
 
-        {canEditPlannedPayment ? (
-          <Collapse in={isEditFormVisible} unmountOnExit>
-            <EditPlannedPaymentForm
-              availableSectionFinancePlans={availableSectionFinancePlans}
-              onCancel={() => setIsEditFormOpen(false)}
-              onSuccess={() => setIsEditFormOpen(false)}
-              plannedPayment={plannedPayment}
-            />
-          </Collapse>
-        ) : null}
-
         <ActualPaymentSection
+          actualPayments={actualPayments}
+          actualPaymentsErrorMessage={
+            actualPaymentsQuery.isError ? actualPaymentsQuery.error.message : null
+          }
+          actualPaymentsRefetch={() => actualPaymentsQuery.refetch()}
           financeCapabilities={financeCapabilities}
+          isActualPaymentsError={actualPaymentsQuery.isError}
+          isActualPaymentsPending={actualPaymentsQuery.isPending}
           plannedPayment={plannedPayment}
         />
+
+        <TechnicalDetailsSection subtitle="Версия записи и даты, которые полезны для проверки истории планового поступления.">
+          <Stack divider={<Divider flexItem />} spacing={2}>
+            <MetaItem label="Версия" value={String(plannedPayment.version)} />
+            <MetaItem label="Создано" value={formatDateTime(plannedPayment.createdAt)} />
+            <MetaItem label="Обновлено" value={formatDateTime(plannedPayment.updatedAt)} />
+            <MetaItem
+              label="В архиве с"
+              value={formatOptionalDateTime(plannedPayment.archivedAt, 'Не архивировано')}
+            />
+            <MetaItem
+              label="Удалено"
+              value={formatOptionalDateTime(plannedPayment.deletedAt, 'Не удалено')}
+            />
+          </Stack>
+        </TechnicalDetailsSection>
       </Stack>
-    </Paper>
+    </CollapsibleSectionCard>
   )
 }
 
 function ActualPaymentSection({
+  actualPayments,
+  actualPaymentsErrorMessage,
+  actualPaymentsRefetch,
   financeCapabilities,
+  isActualPaymentsError,
+  isActualPaymentsPending,
   plannedPayment,
 }: {
+  actualPayments: ActualPayment[]
+  actualPaymentsErrorMessage: string | null
+  actualPaymentsRefetch: () => Promise<unknown>
   financeCapabilities: FinanceCapabilities
+  isActualPaymentsError: boolean
+  isActualPaymentsPending: boolean
   plannedPayment: PlannedPayment
 }) {
-  const actualPaymentsQuery = useActualPayments({
-    plannedPaymentId: plannedPayment.id,
-  })
   const archiveActualPaymentMutation = useArchiveActualPayment()
-  const actualPayments = actualPaymentsQuery.data?.items ?? []
   const hasActiveActualPayment = actualPayments.some(
     (actualPayment) => actualPayment.state === 'ACTIVE',
   )
   const canCreateActualPayment =
-    !actualPaymentsQuery.isPending &&
-    !actualPaymentsQuery.isError &&
+    !isActualPaymentsPending &&
+    !isActualPaymentsError &&
     plannedPayment.state === 'ACTIVE' &&
     !hasActiveActualPayment
-  const showCreateActualPaymentAction =
-    financeCapabilities.canCreateActualPayment && canCreateActualPayment
+  const createActualPaymentHint = getActualPaymentCreateHint({
+    canCreateActualPayment: financeCapabilities.canCreateActualPayment,
+    hasActiveActualPayment,
+    isActualPaymentsError,
+    isActualPaymentsPending,
+    plannedPaymentState: plannedPayment.state,
+    readOnlyReason: financeCapabilities.readOnlyReason,
+  })
+  const totalAmount = actualPayments.reduce(
+    (total, actualPayment) => total + toNumericAmount(actualPayment.amount),
+    0,
+  )
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
@@ -432,34 +432,34 @@ function ActualPaymentSection({
   }
 
   return (
-    <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
-      <Stack spacing={3}>
-        <Stack
-          alignItems={{ xs: 'flex-start', md: 'center' }}
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          spacing={2}
-        >
-          <Stack spacing={0.5}>
-            <Typography variant="h6">Фактические поступления</Typography>
-            <Typography color="text.secondary">
-              Здесь фиксируются реальные поступления по этой плановой записи.
-            </Typography>
-          </Stack>
-
-          {showCreateActualPaymentAction ? (
-            <Button
-              onClick={() => setIsCreateFormOpen((current) => !current)}
-              startIcon={<AddRoundedIcon />}
-              variant="contained"
-            >
-              {isCreateFormOpen ? 'Скрыть форму' : 'Добавить факт поступления'}
-            </Button>
-          ) : null}
+    <CollapsibleSectionCard
+      actions={
+        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+          <Button
+            disabled={!financeCapabilities.canCreateActualPayment || !canCreateActualPayment}
+            onClick={() => setIsCreateFormOpen((current) => !current)}
+            startIcon={<AddRoundedIcon />}
+            variant="contained"
+          >
+            {isCreateFormOpen ? 'Скрыть форму' : 'Добавить факт поступления'}
+          </Button>
+          <ActionAvailabilityHint message={createActualPaymentHint} />
         </Stack>
-
-        {financeCapabilities.canCreateActualPayment ? (
-          <Collapse in={showCreateActualPaymentAction && isCreateFormOpen} unmountOnExit>
+      }
+      defaultExpanded={false}
+      subtitle="Реально зафиксированные поступления по этой плановой записи."
+      summary={
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
+          <SummaryBadge label="Записей" value={String(actualPayments.length)} />
+          <SummaryBadge label="Сумма" value={formatAmount(totalAmount)} />
+        </Stack>
+      }
+      surface="paper"
+      title="Фактические поступления"
+    >
+      <Stack spacing={3}>
+        {financeCapabilities.canCreateActualPayment && canCreateActualPayment ? (
+          <Collapse in={isCreateFormOpen} unmountOnExit>
             <CreateActualPaymentForm
               onSuccess={() => setIsCreateFormOpen(false)}
               plannedPaymentId={plannedPayment.id}
@@ -476,31 +476,33 @@ function ActualPaymentSection({
           />
         ) : null}
 
-        {actualPaymentsQuery.isPending ? (
+        {isActualPaymentsPending ? (
           <LoadingState
             description="Загружаем фактические поступления, связанные с этой плановой записью."
             title="Загружаем фактические поступления"
           />
         ) : null}
 
-        {actualPaymentsQuery.isError ? (
+        {isActualPaymentsError ? (
           <ErrorState
             action={
-              <Button onClick={() => void actualPaymentsQuery.refetch()} variant="contained">
+              <Button onClick={() => void actualPaymentsRefetch()} variant="contained">
                 Повторить
               </Button>
             }
-            description={actualPaymentsQuery.error.message}
+            description={actualPaymentsErrorMessage ?? 'Не удалось загрузить фактические поступления.'}
             title="Не удалось загрузить фактические поступления"
           />
         ) : null}
 
-        {!actualPaymentsQuery.isPending &&
-        !actualPaymentsQuery.isError &&
+        {!isActualPaymentsPending &&
+        !isActualPaymentsError &&
         actualPayments.length === 0 ? (
           <EmptyState
             action={
-              showCreateActualPaymentAction && !isCreateFormOpen ? (
+              financeCapabilities.canCreateActualPayment &&
+              canCreateActualPayment &&
+              !isCreateFormOpen ? (
                 <Button
                   onClick={() => setIsCreateFormOpen(true)}
                   startIcon={<AddRoundedIcon />}
@@ -512,15 +514,15 @@ function ActualPaymentSection({
             }
             description={
               financeCapabilities.canCreateActualPayment
-                ? 'По этой плановой записи пока нет фактических поступлений. Добавьте первое поступление, чтобы зафиксировать получение денег.'
+                ? 'По этой плановой записи пока нет фактических поступлений.'
                 : 'По этой плановой записи пока нет фактических поступлений.'
             }
             title="Фактических поступлений пока нет"
           />
         ) : null}
 
-        {!actualPaymentsQuery.isPending &&
-        !actualPaymentsQuery.isError &&
+        {!isActualPaymentsPending &&
+        !isActualPaymentsError &&
         actualPayments.length > 0 ? (
           <Stack spacing={2}>
             {actualPayments.map((actualPayment) => (
@@ -530,12 +532,13 @@ function ActualPaymentSection({
                 isArchiving={archivingId === actualPayment.id}
                 key={actualPayment.id}
                 onArchive={handleArchive}
+                readOnlyReason={financeCapabilities.readOnlyReason}
               />
             ))}
           </Stack>
         ) : null}
       </Stack>
-    </Paper>
+    </CollapsibleSectionCard>
   )
 }
 
@@ -544,70 +547,117 @@ function ActualPaymentListItem({
   canArchiveActualPayment,
   isArchiving,
   onArchive,
+  readOnlyReason,
 }: {
   actualPayment: ActualPayment
   canArchiveActualPayment: boolean
   isArchiving: boolean
   onArchive: (actualPayment: ActualPayment) => Promise<void>
+  readOnlyReason: string | null
 }) {
   const isArchived = actualPayment.state !== 'ACTIVE'
+  const archiveHint = canArchiveActualPayment
+    ? isArchived
+      ? 'Архивная запись доступна только для просмотра.'
+      : 'Можно отправить запись в архив, если факт больше не должен считаться активным.'
+    : readOnlyReason ??
+      'Архивировать фактические поступления можно только с правом редактирования.'
 
   return (
     <Paper sx={{ p: { xs: 2.5, md: 3 } }} variant="outlined">
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        justifyContent="space-between"
-        spacing={3}
-      >
-        <Stack spacing={1.5} sx={{ flex: 1 }}>
-          <Stack
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            direction={{ xs: 'column', sm: 'row' }}
-            flexWrap="wrap"
-            spacing={1}
-          >
-            <Typography variant="subtitle1">
-              Дата поступления: {formatDate(actualPayment.actualDate)}
+      <Stack spacing={2.5}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          justifyContent="space-between"
+          spacing={2}
+        >
+          <Stack spacing={1}>
+            <Stack
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              direction={{ xs: 'column', sm: 'row' }}
+              flexWrap="wrap"
+              spacing={1}
+            >
+              <Typography variant="subtitle1">
+                Дата поступления: {formatDate(actualPayment.actualDate)}
+              </Typography>
+              <FinanceStatusChip value={actualPayment.state} />
+            </Stack>
+            <Typography color="text.secondary" variant="body2">
+              Сумма: {formatAmount(actualPayment.amount)}
             </Typography>
-            <FinanceStatusChip value={actualPayment.state} />
+            <Typography color="text.secondary" variant="body2">
+              Комментарий: {actualPayment.comment ?? 'Без комментария'}
+            </Typography>
           </Stack>
 
-          <Typography color="text.secondary" variant="body2">
-            Сумма: {formatAmount(actualPayment.amount)}
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Комментарий: {actualPayment.comment ?? 'Без комментария'}
-          </Typography>
-
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            sx={{ flexWrap: 'wrap' }}
-          >
-            <MetaItem label="Версия" value={String(actualPayment.version)} />
-            <MetaItem
-              label="Создано"
-              value={formatDateTime(actualPayment.createdAt)}
-            />
-            <MetaItem
-              label="Обновлено"
-              value={formatDateTime(actualPayment.updatedAt)}
-            />
-            <MetaItem
-              label="В архиве с"
-              value={formatOptionalDateTime(actualPayment.archivedAt)}
-            />
-          </Stack>
-        </Stack>
-
-        {canArchiveActualPayment ? (
           <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
             <ArchiveActionButton
+              disabled={!canArchiveActualPayment}
               isArchived={isArchived}
               isArchiving={isArchiving}
               onClick={() => void onArchive(actualPayment)}
             />
+            <ActionAvailabilityHint message={archiveHint} />
           </Stack>
+        </Stack>
+
+        <TechnicalDetailsSection subtitle="Технические поля фактической записи скрыты по умолчанию.">
+          <Stack divider={<Divider flexItem />} spacing={2}>
+            <MetaItem label="Версия" value={String(actualPayment.version)} />
+            <MetaItem label="Создано" value={formatDateTime(actualPayment.createdAt)} />
+            <MetaItem label="Обновлено" value={formatDateTime(actualPayment.updatedAt)} />
+            <MetaItem
+              label="В архиве с"
+              value={formatOptionalDateTime(actualPayment.archivedAt, 'Не архивировано')}
+            />
+            <MetaItem
+              label="Удалено"
+              value={formatOptionalDateTime(actualPayment.deletedAt, 'Не удалено')}
+            />
+          </Stack>
+        </TechnicalDetailsSection>
+      </Stack>
+    </Paper>
+  )
+}
+
+function DetailedPlannedPaymentCondition({
+  plannedPayment,
+}: {
+  plannedPayment: PlannedPayment
+}) {
+  if (plannedPayment.conditionSource === 'DATE') {
+    return (
+      <Paper sx={{ p: 2 }} variant="outlined">
+        <Stack spacing={0.5}>
+          <Typography variant="subtitle2">Подробное условие</Typography>
+          <Typography color="text.secondary" variant="body2">
+            Поступление ожидается к дате {formatOptionalDate(plannedPayment.plannedDate)}.
+          </Typography>
+        </Stack>
+      </Paper>
+    )
+  }
+
+  return (
+    <Paper sx={{ p: 2 }} variant="outlined">
+      <Stack spacing={1.25}>
+        <Typography variant="subtitle2">Подробное условие</Typography>
+        <Typography color="text.secondary" variant="body2">
+          Поступление ожидается только после того, как произойдут все выбранные проектные события и события раздела.
+        </Typography>
+        {plannedPayment.projectEventIds.length > 0 ? (
+          <IdentifierGroup
+            label="Связанные проектные события"
+            values={plannedPayment.projectEventIds}
+          />
+        ) : null}
+        {plannedPayment.sectionEventIds.length > 0 ? (
+          <IdentifierGroup
+            label="Связанные события раздела"
+            values={plannedPayment.sectionEventIds}
+          />
         ) : null}
       </Stack>
     </Paper>
@@ -635,6 +685,32 @@ function IdentifierGroup({
   )
 }
 
+function SummaryBadge({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <Paper
+      sx={{
+        bgcolor: 'background.default',
+        px: 1.25,
+        py: 1,
+      }}
+      variant="outlined"
+    >
+      <Stack spacing={0.25}>
+        <Typography color="text.secondary" variant="caption">
+          {label}
+        </Typography>
+        <Typography variant="body2">{value}</Typography>
+      </Stack>
+    </Paper>
+  )
+}
+
 function MetaItem({
   label,
   value,
@@ -650,6 +726,97 @@ function MetaItem({
       <Typography variant="body2">{value}</Typography>
     </Stack>
   )
+}
+
+function getPlannedPaymentConditionPreview(plannedPayment: PlannedPayment) {
+  if (plannedPayment.conditionSource === 'DATE') {
+    return `По дате: ${formatOptionalDate(plannedPayment.plannedDate)}`
+  }
+
+  const totalEventCount =
+    plannedPayment.projectEventIds.length + plannedPayment.sectionEventIds.length
+
+  return totalEventCount > 0
+    ? `По событиям: выбрано ${totalEventCount} шт.`
+    : 'По событиям: список событий пока не заполнен'
+}
+
+function getPlannedPaymentActionHint({
+  canArchivePlannedPayment,
+  canEditPlannedPayment,
+  editAvailabilityReason,
+  isArchived,
+  readOnlyReason,
+}: {
+  canArchivePlannedPayment: boolean
+  canEditPlannedPayment: boolean
+  editAvailabilityReason: string | null
+  isArchived: boolean
+  readOnlyReason: string | null
+}) {
+  if (!canEditPlannedPayment || !canArchivePlannedPayment) {
+    return (
+      readOnlyReason ??
+      'Редактировать и архивировать плановые поступления можно только с правом редактирования.'
+    )
+  }
+
+  if (isArchived) {
+    return 'Архивная запись доступна только для просмотра и проверки истории.'
+  }
+
+  if (editAvailabilityReason) {
+    return editAvailabilityReason
+  }
+
+  return 'Можно изменить сумму, условие, связанные события и разделы.'
+}
+
+function getActualPaymentCreateHint({
+  canCreateActualPayment,
+  hasActiveActualPayment,
+  isActualPaymentsError,
+  isActualPaymentsPending,
+  plannedPaymentState,
+  readOnlyReason,
+}: {
+  canCreateActualPayment: boolean
+  hasActiveActualPayment: boolean
+  isActualPaymentsError: boolean
+  isActualPaymentsPending: boolean
+  plannedPaymentState: PlannedPayment['state']
+  readOnlyReason: string | null
+}) {
+  if (!canCreateActualPayment) {
+    return (
+      readOnlyReason ??
+      'Фиксировать фактические поступления можно только с правом редактирования.'
+    )
+  }
+
+  if (plannedPaymentState !== 'ACTIVE') {
+    return 'Добавить факт можно только для активной плановой записи.'
+  }
+
+  if (isActualPaymentsPending) {
+    return 'Сначала дождитесь загрузки уже существующих фактических поступлений.'
+  }
+
+  if (isActualPaymentsError) {
+    return 'Сначала нужно успешно загрузить фактические поступления по этой записи.'
+  }
+
+  if (hasActiveActualPayment) {
+    return 'По этой записи уже есть активный факт поступления.'
+  }
+
+  return 'Можно зафиксировать реальное поступление по этой записи.'
+}
+
+function toNumericAmount(value: string) {
+  const numericValue = Number(value)
+
+  return Number.isFinite(numericValue) ? numericValue : 0
 }
 
 function toApiError(error: unknown): ApiError {
@@ -680,19 +847,19 @@ function getPlannedPaymentEditAvailabilityReason({
   plannedPaymentStatus: PlannedPayment['status']
 }) {
   if (isActualPaymentsPending) {
-    return 'Проверяем фактические поступления перед открытием редактирования.'
+    return 'Перед редактированием нужно проверить, есть ли по записи фактические поступления.'
   }
 
   if (hasActualPaymentsError) {
-    return 'Сначала дождитесь успешной загрузки фактических поступлений.'
+    return 'Редактирование станет доступно после успешной загрузки фактических поступлений.'
   }
 
   if (actualPayments.some((actualPayment) => actualPayment.state === 'ACTIVE')) {
     if (plannedPaymentStatus === 'RECEIVED') {
-      return 'Полное редактирование недоступно, пока существует активное фактическое поступление. Сначала верните статус назад и отправьте факт в архив.'
+      return 'Пока по записи есть активный факт и статус "Получено", редактирование закрыто. Сначала верните статус назад и отправьте факт в архив.'
     }
 
-    return 'Чтобы редактировать запись, сначала отправьте активное фактическое поступление в архив.'
+    return 'Пока по записи есть активный факт поступления, редактирование недоступно.'
   }
 
   return null

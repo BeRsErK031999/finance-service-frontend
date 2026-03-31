@@ -5,17 +5,19 @@ interface ArchiveActionButtonProps {
   isArchived: boolean
   isArchiving: boolean
   onClick: () => void
+  disabled?: boolean
 }
 
 export function ArchiveActionButton({
   isArchived,
   isArchiving,
   onClick,
+  disabled = false,
 }: ArchiveActionButtonProps) {
   return (
     <Button
       color="warning"
-      disabled={isArchived || isArchiving}
+      disabled={disabled || isArchived || isArchiving}
       onClick={onClick}
       startIcon={<ArchiveOutlinedIcon />}
       variant="outlined"

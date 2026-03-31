@@ -27,19 +27,24 @@ import { parseApiError } from '../../shared/api/parse-api-error'
 import type { FinanceCapabilities } from '../../shared/access/finance-capabilities'
 import { formatDateTime } from '../../shared/lib/format'
 import type { ApiError } from '../../shared/types/api'
+import { ActionAvailabilityHint } from '../../shared/ui/ActionAvailabilityHint'
+import { CollapsibleSectionCard } from '../../shared/ui/CollapsibleSectionCard'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
 import { LoadingState } from '../../shared/ui/LoadingState'
-import { SectionCard } from '../../shared/ui/SectionCard'
 
 interface ProjectFinanceMembersBlockProps {
   financeCapabilities: FinanceCapabilities
   projectFinanceId: string
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
 }
 
 export function ProjectFinanceMembersBlock({
   financeCapabilities,
   projectFinanceId,
+  expanded,
+  onExpandedChange,
 }: ProjectFinanceMembersBlockProps) {
   const projectFinanceMembersQuery = useProjectFinanceMembersQuery(projectFinanceId)
   const updateProjectFinanceMemberAccessMutation =
@@ -52,6 +57,10 @@ export function ProjectFinanceMembersBlock({
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null)
   const members = projectFinanceMembersQuery.data?.items ?? []
   const canManageMembers = financeCapabilities.canEditProjectFinance
+  const manageMembersReason = canManageMembers
+    ? 'Можно добавлять участников и менять их уровень доступа.'
+    : financeCapabilities.readOnlyReason ??
+      'Управлять участниками можно только с правом редактирования финансового плана.'
 
   const handleUpdateAccess = async (
     memberId: string,
@@ -96,19 +105,26 @@ export function ProjectFinanceMembersBlock({
   }
 
   return (
-    <SectionCard
-      action={
-        canManageMembers ? (
-            <Button
-              onClick={() => setIsCreateFormOpen((current) => !current)}
-              startIcon={<AddRoundedIcon />}
-              variant="contained"
-            >
+    <CollapsibleSectionCard
+      actions={
+        <Stack alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={1}>
+          <Button
+            disabled={!canManageMembers}
+            onClick={() => setIsCreateFormOpen((current) => !current)}
+            startIcon={<AddRoundedIcon />}
+            variant="contained"
+          >
             {isCreateFormOpen ? 'Скрыть форму' : 'Добавить участника'}
           </Button>
-        ) : undefined
+          <ActionAvailabilityHint message={manageMembersReason} />
+        </Stack>
       }
-      subtitle="Участники этого финансового плана и их уровни доступа."
+      expanded={expanded}
+      onToggle={onExpandedChange}
+      subtitle="Состав участников проекта и их уровни доступа к этому финансовому плану."
+      summary={
+        <MemberSummaryBadge count={members.length} />
+      }
       title="Участники"
     >
       <Stack spacing={3}>
@@ -189,7 +205,27 @@ export function ProjectFinanceMembersBlock({
           </Stack>
         ) : null}
       </Stack>
-    </SectionCard>
+    </CollapsibleSectionCard>
+  )
+}
+
+function MemberSummaryBadge({ count }: { count: number }) {
+  return (
+    <Paper
+      sx={{
+        bgcolor: 'background.default',
+        px: 1.5,
+        py: 1,
+      }}
+      variant="outlined"
+    >
+      <Stack spacing={0.25}>
+        <Typography color="text.secondary" variant="caption">
+          Участников
+        </Typography>
+        <Typography variant="subtitle2">{count}</Typography>
+      </Stack>
+    </Paper>
   )
 }
 

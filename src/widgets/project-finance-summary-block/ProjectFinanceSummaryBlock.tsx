@@ -5,13 +5,15 @@ import { useActualPayments } from '../../entities/actual-payment/api/actual-paym
 import { usePlannedCosts } from '../../entities/planned-cost/api/planned-cost.query'
 import { usePlannedPayments } from '../../entities/planned-payment/api/planned-payment.query'
 import { formatAmount } from '../../shared/lib/format'
+import { CollapsibleSectionCard } from '../../shared/ui/CollapsibleSectionCard'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
 import { LoadingState } from '../../shared/ui/LoadingState'
-import { SectionCard } from '../../shared/ui/SectionCard'
 
 interface ProjectFinanceSummaryBlockProps {
   projectFinanceId: string
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
 }
 
 interface SummaryMetric {
@@ -22,6 +24,8 @@ interface SummaryMetric {
 
 export function ProjectFinanceSummaryBlock({
   projectFinanceId,
+  expanded,
+  onExpandedChange,
 }: ProjectFinanceSummaryBlockProps) {
   const plannedPaymentsQuery = usePlannedPayments(projectFinanceId)
   const plannedCostsQuery = usePlannedCosts(projectFinanceId)
@@ -53,6 +57,8 @@ export function ProjectFinanceSummaryBlock({
   const plannedCostsTotal = sumAmounts(plannedCosts)
   const actualPaymentsTotal = sumAmounts(actualPayments)
   const actualCostsTotal = sumAmounts(actualCosts)
+  const plannedBalance = plannedPaymentsTotal - plannedCostsTotal
+  const actualBalance = actualPaymentsTotal - actualCostsTotal
 
   const metrics: SummaryMetric[] = [
     {
@@ -77,31 +83,49 @@ export function ProjectFinanceSummaryBlock({
     },
     {
       label: 'Плановый баланс',
-      secondaryLabel: 'Плановые поступления минус плановые расходы',
-      value: plannedPaymentsTotal - plannedCostsTotal,
+      secondaryLabel: 'Поступления минус расходы',
+      value: plannedBalance,
     },
     {
       label: 'Фактический баланс',
-      secondaryLabel: 'Фактические поступления минус фактические расходы',
-      value: actualPaymentsTotal - actualCostsTotal,
+      secondaryLabel: 'Фактические суммы по проекту',
+      value: actualBalance,
     },
   ]
 
   return (
-    <SectionCard
-      subtitle="Сводка по всем плановым и фактическим движениям в этом финансовом плане."
+    <CollapsibleSectionCard
+      expanded={expanded}
+      onToggle={onExpandedChange}
+      subtitle="Сводка по всем активным плановым и фактическим движениям проекта."
+      summary={
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          sx={{ flexWrap: 'wrap' }}
+          useFlexGap
+        >
+          <SummaryHeaderBadge label="Плановый баланс" value={plannedBalance} />
+          <SummaryHeaderBadge label="Фактический баланс" value={actualBalance} />
+        </Stack>
+      }
       title="Итоги по проекту"
     >
       <Stack spacing={3}>
         {hasError ? (
           <ErrorState
             action={
-              <Button onClick={() => void retryAllQueries([
-                plannedPaymentsQuery.refetch,
-                plannedCostsQuery.refetch,
-                actualPaymentsQuery.refetch,
-                actualCostsQuery.refetch,
-              ])} variant="contained">
+              <Button
+                onClick={() =>
+                  void retryAllQueries([
+                    plannedPaymentsQuery.refetch,
+                    plannedCostsQuery.refetch,
+                    actualPaymentsQuery.refetch,
+                    actualCostsQuery.refetch,
+                  ])
+                }
+                variant="contained"
+              >
                 Повторить
               </Button>
             }
@@ -138,19 +162,42 @@ export function ProjectFinanceSummaryBlock({
         ) : null}
 
         {!hasError && !isPending && totalItemCount > 0 ? (
-          <Stack
-            direction="row"
-            flexWrap="wrap"
-            spacing={2}
-            useFlexGap
-          >
+          <Stack direction="row" flexWrap="wrap" spacing={1.5} useFlexGap>
             {metrics.map((metric) => (
               <SummaryMetricCard key={metric.label} metric={metric} />
             ))}
           </Stack>
         ) : null}
       </Stack>
-    </SectionCard>
+    </CollapsibleSectionCard>
+  )
+}
+
+function SummaryHeaderBadge({
+  label,
+  value,
+}: {
+  label: string
+  value: number
+}) {
+  return (
+    <Paper
+      sx={{
+        bgcolor: 'background.default',
+        px: 1.5,
+        py: 1,
+      }}
+      variant="outlined"
+    >
+      <Stack spacing={0.25}>
+        <Typography color="text.secondary" variant="caption">
+          {label}
+        </Typography>
+        <Typography sx={{ color: getBalanceColor(value) }} variant="subtitle2">
+          {formatAmount(value)}
+        </Typography>
+      </Stack>
+    </Paper>
   )
 }
 
@@ -162,19 +209,19 @@ function SummaryMetricCard({ metric }: { metric: SummaryMetric }) {
       sx={{
         flex: {
           xs: '1 1 100%',
-          sm: '1 1 calc(50% - 8px)',
-          lg: '1 1 calc(33.333% - 11px)',
+          sm: '1 1 calc(50% - 6px)',
+          xl: '1 1 calc(33.333% - 8px)',
         },
         minWidth: 0,
-        p: { xs: 2.5, md: 3 },
+        p: 2,
       }}
       variant="outlined"
     >
-      <Stack spacing={1.25}>
+      <Stack spacing={0.75}>
         <Typography color="text.secondary" variant="body2">
           {metric.label}
         </Typography>
-        <Typography sx={{ color: valueColor }} variant="h5">
+        <Typography sx={{ color: valueColor }} variant="h6">
           {formatAmount(metric.value)}
         </Typography>
         <Typography color="text.secondary" variant="caption">
@@ -190,11 +237,15 @@ function getMetricValueColor(metric: SummaryMetric) {
     return 'text.primary'
   }
 
-  if (metric.value < 0) {
+  return getBalanceColor(metric.value)
+}
+
+function getBalanceColor(value: number) {
+  if (value < 0) {
     return 'error.main'
   }
 
-  if (metric.value > 0) {
+  if (value > 0) {
     return 'success.main'
   }
 
@@ -262,8 +313,6 @@ function joinLabels(labels: string[]) {
   return `${labels.slice(0, -1).join(', ')} и ${labels.at(-1)}`
 }
 
-async function retryAllQueries(
-  refetchers: Array<() => Promise<unknown>>,
-) {
+async function retryAllQueries(refetchers: Array<() => Promise<unknown>>) {
   await Promise.all(refetchers.map((refetch) => refetch()))
 }
