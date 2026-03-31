@@ -33,7 +33,7 @@ const EXTERNAL_PROJECT_ID_HELPER_TEXT =
 const FINANCE_NAME_HELPER_TEXT =
   'Это название будет видно пользователям внутри финансового сервиса.'
 const DESCRIPTION_HELPER_TEXT = 'Необязательно. Кратко опишите назначение плана.'
-const DEMO_EXTERNAL_PROJECT_ID = 'demo-project-1'
+const DEMO_EXTERNAL_PROJECT_ID = '11111111-1111-1111-1111-111111111111'
 
 export function CreateProjectFinanceForm() {
   const navigate = useNavigate()
