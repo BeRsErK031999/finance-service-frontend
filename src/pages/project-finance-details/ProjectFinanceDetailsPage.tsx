@@ -52,7 +52,9 @@ type SectionExpandedKey = keyof SectionExpandedState
 export function ProjectFinanceDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const projectFinanceQuery = useProjectFinanceDetailsQuery(id)
-  const projectFinanceAccessQuery = useProjectFinanceAccessQuery(id)
+  const projectFinanceAccessQuery = useProjectFinanceAccessQuery(id, {
+    enabled: Boolean(id) && projectFinanceQuery.isSuccess,
+  })
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [sectionExpandedState, setSectionExpandedState] = useState<SectionExpandedState>(

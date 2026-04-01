@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 
 const DEFAULT_API_BASE_URL = '/api'
 const DEFAULT_API_PROXY_TARGET = 'http://localhost:13000'
-const DEFAULT_API_PROXY_FALLBACK_TARGET = 'http://localhost:3000'
 const PROXY_HEALTHCHECK_PATH = '/health'
 const PROXY_HEALTHCHECK_TIMEOUT_MS = 1_000
 
@@ -53,7 +52,7 @@ export default defineConfig(async ({ mode }) => {
   const apiBaseUrl = env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
   const apiProxyTargets = normalizeProxyTargets([
     env.VITE_API_PROXY_TARGET || DEFAULT_API_PROXY_TARGET,
-    env.VITE_API_PROXY_FALLBACK_TARGET || DEFAULT_API_PROXY_FALLBACK_TARGET,
+    env.VITE_API_PROXY_FALLBACK_TARGET,
   ])
   const shouldProxyApi =
     apiBaseUrl.startsWith('/') && apiProxyTargets.length > 0

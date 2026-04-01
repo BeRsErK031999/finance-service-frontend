@@ -58,9 +58,14 @@ export function useProjectFinanceDetailsQuery(projectFinanceId?: string) {
   })
 }
 
-export function useProjectFinanceAccessQuery(projectFinanceId?: string) {
+export function useProjectFinanceAccessQuery(
+  projectFinanceId?: string,
+  options: {
+    enabled?: boolean
+  } = {},
+) {
   return useQuery<ProjectFinanceAccess, ApiError>({
-    enabled: Boolean(projectFinanceId),
+    enabled: options.enabled ?? Boolean(projectFinanceId),
     queryKey: projectFinanceQueryKeys.access(projectFinanceId ?? ''),
     queryFn: () => getProjectFinanceAccessForCurrentUser(projectFinanceId ?? ''),
   })
