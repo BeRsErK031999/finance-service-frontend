@@ -43,6 +43,7 @@ import { ArchiveActionButton } from '../../shared/ui/ArchiveActionButton'
 import { CollapsibleSectionCard } from '../../shared/ui/CollapsibleSectionCard'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
+import { FileAttachmentsSection } from '../../shared/ui/FileAttachmentsSection'
 import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 import { TechnicalDetailsSection } from '../../shared/ui/TechnicalDetailsSection'
@@ -242,6 +243,7 @@ function PlannedPaymentListItem({
   })
   const canOpenEditForm =
     canEditPlannedPayment && !isArchived && editAvailabilityReason === null
+  const canManageFiles = canOpenEditForm
   const showStatusChangeAction =
     canChangeStatus &&
     !isArchived &&
@@ -249,6 +251,12 @@ function PlannedPaymentListItem({
     hasActiveActualPayment
   const actionHint = getPlannedPaymentActionHint({
     canArchivePlannedPayment,
+    canEditPlannedPayment,
+    editAvailabilityReason,
+    isArchived,
+    readOnlyReason: financeCapabilities.readOnlyReason,
+  })
+  const fileActionHint = getPlannedPaymentFileActionHint({
     canEditPlannedPayment,
     editAvailabilityReason,
     isArchived,
@@ -335,6 +343,16 @@ function PlannedPaymentListItem({
             plannedPayment={plannedPayment}
           />
         </Collapse>
+
+        <FileAttachmentsSection
+          canManageFiles={canManageFiles}
+          manageFilesHint={fileActionHint}
+          owner={{
+            id: plannedPayment.id,
+            projectFinanceId: plannedPayment.projectFinanceId,
+            type: 'planned-payment',
+          }}
+        />
 
         <ActualPaymentSection
           actualPayments={actualPayments}
@@ -770,6 +788,35 @@ function getPlannedPaymentActionHint({
   }
 
   return 'Можно изменить сумму, условие, связанные события и разделы.'
+}
+
+function getPlannedPaymentFileActionHint({
+  canEditPlannedPayment,
+  editAvailabilityReason,
+  isArchived,
+  readOnlyReason,
+}: {
+  canEditPlannedPayment: boolean
+  editAvailabilityReason: string | null
+  isArchived: boolean
+  readOnlyReason: string | null
+}) {
+  if (!canEditPlannedPayment) {
+    return (
+      readOnlyReason ??
+      'Загружать и удалять файлы можно только с правом редактирования.'
+    )
+  }
+
+  if (isArchived) {
+    return 'Для архивной записи доступно только скачивание уже прикреплённых файлов.'
+  }
+
+  if (editAvailabilityReason) {
+    return editAvailabilityReason
+  }
+
+  return 'Можно загружать новые файлы и удалять уже прикреплённые.'
 }
 
 function getActualPaymentCreateHint({

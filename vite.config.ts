@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const DEFAULT_API_BASE_URL = '/api'
-const DEFAULT_API_PROXY_TARGET = 'http://localhost:13000'
+const DEFAULT_API_PROXY_TARGET = 'http://localhost:13002'
 const PROXY_HEALTHCHECK_PATH = '/health'
 const PROXY_HEALTHCHECK_TIMEOUT_MS = 1_000
 

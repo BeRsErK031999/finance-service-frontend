@@ -43,6 +43,7 @@ import { ArchiveActionButton } from '../../shared/ui/ArchiveActionButton'
 import { CollapsibleSectionCard } from '../../shared/ui/CollapsibleSectionCard'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ErrorState } from '../../shared/ui/ErrorState'
+import { FileAttachmentsSection } from '../../shared/ui/FileAttachmentsSection'
 import { FinanceStatusChip } from '../../shared/ui/FinanceStatusChip'
 import { LoadingState } from '../../shared/ui/LoadingState'
 import { TechnicalDetailsSection } from '../../shared/ui/TechnicalDetailsSection'
@@ -239,6 +240,7 @@ function PlannedCostListItem({
   })
   const canOpenEditForm =
     canEditPlannedCost && !isArchived && editAvailabilityReason === null
+  const canManageFiles = canOpenEditForm
   const showStatusChangeAction =
     canChangeStatus &&
     !isArchived &&
@@ -246,6 +248,12 @@ function PlannedCostListItem({
     hasActiveActualCost
   const actionHint = getPlannedCostActionHint({
     canArchivePlannedCost,
+    canEditPlannedCost,
+    editAvailabilityReason,
+    isArchived,
+    readOnlyReason: financeCapabilities.readOnlyReason,
+  })
+  const fileActionHint = getPlannedCostFileActionHint({
     canEditPlannedCost,
     editAvailabilityReason,
     isArchived,
@@ -332,6 +340,16 @@ function PlannedCostListItem({
             plannedCost={plannedCost}
           />
         </Collapse>
+
+        <FileAttachmentsSection
+          canManageFiles={canManageFiles}
+          manageFilesHint={fileActionHint}
+          owner={{
+            id: plannedCost.id,
+            projectFinanceId: plannedCost.projectFinanceId,
+            type: 'planned-cost',
+          }}
+        />
 
         <ActualCostSection
           actualCosts={actualCosts}
@@ -761,6 +779,35 @@ function getPlannedCostActionHint({
   }
 
   return 'Можно изменить сумму, условие, связанные события и разделы.'
+}
+
+function getPlannedCostFileActionHint({
+  canEditPlannedCost,
+  editAvailabilityReason,
+  isArchived,
+  readOnlyReason,
+}: {
+  canEditPlannedCost: boolean
+  editAvailabilityReason: string | null
+  isArchived: boolean
+  readOnlyReason: string | null
+}) {
+  if (!canEditPlannedCost) {
+    return (
+      readOnlyReason ??
+      'Загружать и удалять файлы можно только с правом редактирования.'
+    )
+  }
+
+  if (isArchived) {
+    return 'Для архивной записи доступно только скачивание уже прикреплённых файлов.'
+  }
+
+  if (editAvailabilityReason) {
+    return editAvailabilityReason
+  }
+
+  return 'Можно загружать новые файлы и удалять уже прикреплённые.'
 }
 
 function getActualCostCreateHint({
