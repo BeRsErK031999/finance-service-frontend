@@ -344,15 +344,17 @@ function PlannedPaymentListItem({
           />
         </Collapse>
 
-        <FileAttachmentsSection
-          canManageFiles={canManageFiles}
-          manageFilesHint={fileActionHint}
-          owner={{
-            id: plannedPayment.id,
-            projectFinanceId: plannedPayment.projectFinanceId,
-            type: 'planned-payment',
-          }}
-        />
+        {!isEditFormOpen ? (
+          <FileAttachmentsSection
+            canManageFiles={canManageFiles}
+            manageFilesHint={fileActionHint}
+            owner={{
+              id: plannedPayment.id,
+              projectFinanceId: plannedPayment.projectFinanceId,
+              type: 'planned-payment',
+            }}
+          />
+        ) : null}
 
         <ActualPaymentSection
           actualPayments={actualPayments}

@@ -41,12 +41,14 @@ interface FileAttachmentsSectionProps {
   owner: FileAttachmentOwner
   canManageFiles: boolean
   manageFilesHint: string
+  defaultExpanded?: boolean
 }
 
 export function FileAttachmentsSection({
   owner,
   canManageFiles,
   manageFilesHint,
+  defaultExpanded = false,
 }: FileAttachmentsSectionProps) {
   const plannedPaymentFilesQuery = usePlannedPaymentFiles(
     owner.type === 'planned-payment' ? owner.id : undefined,
@@ -137,7 +139,7 @@ export function FileAttachmentsSection({
           <ActionAvailabilityHint message={headerHint} />
         </Stack>
       }
-      defaultExpanded={false}
+      defaultExpanded={defaultExpanded}
       subtitle="Файлы, прикреплённые к этой записи."
       summary={
         <Stack direction="row" spacing={1}>

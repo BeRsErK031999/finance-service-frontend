@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Alert,
@@ -13,17 +14,22 @@ import {
 } from '@mui/material'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 
-import { useCreatePlannedCost } from '../../../../entities/planned-cost/api/planned-cost.query'
+import {
+  plannedCostKeys,
+  useCreatePlannedCost,
+} from '../../../../entities/planned-cost/api/planned-cost.query'
 import {
   PLANNED_COST_CONDITION_SOURCES,
   type PlannedCostConditionSource,
 } from '../../../../entities/planned-cost/model/types'
+import { uploadFileAttachment } from '../../../../shared/api/file-attachments.api'
 import { parseApiError } from '../../../../shared/api/parse-api-error'
 import type {
   ApiError,
   ApiValidationErrorDetails,
   ApiValidationIssue,
 } from '../../../../shared/types/api'
+import { PendingFileAttachmentsField } from '../../../../shared/ui/PendingFileAttachmentsField'
 import {
   createPlannedCostFormSchema,
   defaultCreatePlannedCostFormValues,
@@ -42,6 +48,11 @@ const FIELD_NAMES = new Set<keyof CreatePlannedCostFormValues>([
 
 const EMPTY_AUTOCOMPLETE_OPTIONS: string[] = []
 
+interface SubmissionFeedback {
+  message: string
+  severity: 'success' | 'warning'
+}
+
 interface CreatePlannedCostFormProps {
   projectFinanceId: string
   sectionFinancePlanId: string
@@ -53,8 +64,13 @@ export function CreatePlannedCostForm({
   sectionFinancePlanId,
   sectionFinancePlanName,
 }: CreatePlannedCostFormProps) {
+  const queryClient = useQueryClient()
   const createPlannedCostMutation = useCreatePlannedCost()
   const [formError, setFormError] = useState<string | null>(null)
+  const [submissionFeedback, setSubmissionFeedback] =
+    useState<SubmissionFeedback | null>(null)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const {
     clearErrors,
     control,
@@ -88,14 +104,15 @@ export function CreatePlannedCostForm({
     }
   }, [clearErrors, conditionSource, setValue])
 
-  const isSubmitting = createPlannedCostMutation.isPending
+  const isSubmitting = createPlannedCostMutation.isPending || isUploadingFiles
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null)
+    setSubmissionFeedback(null)
     clearErrors()
 
     try {
-      await createPlannedCostMutation.mutateAsync(
+      const createdPlannedCost = await createPlannedCostMutation.mutateAsync(
         mapCreatePlannedCostFormValuesToRequest(
           values,
           projectFinanceId,
@@ -103,7 +120,43 @@ export function CreatePlannedCostForm({
         ),
       )
 
+      const filesToUpload = pendingFiles
+
+      if (filesToUpload.length > 0) {
+        setIsUploadingFiles(true)
+
+        const uploadResults = await Promise.allSettled(
+          filesToUpload.map((file) =>
+            uploadFileAttachment({
+              file,
+              plannedCostId: createdPlannedCost.id,
+            }),
+          ),
+        )
+        const failedFileNames = uploadResults.flatMap((result, index) =>
+          result.status === 'rejected' ? [filesToUpload[index]?.name ?? 'Без имени'] : [],
+        )
+
+        await queryClient.invalidateQueries({
+          queryKey: plannedCostKeys.list(createdPlannedCost.projectFinanceId),
+        })
+
+        setSubmissionFeedback(
+          failedFileNames.length === 0
+            ? {
+                message:
+                  'Плановый расход создан, выбранные файлы загружены автоматически.',
+                severity: 'success',
+              }
+            : {
+                message: `Плановый расход создан, но часть файлов не загрузилась: ${failedFileNames.join(', ')}. Их можно добавить повторно из карточки записи.`,
+                severity: 'warning',
+              },
+        )
+      }
+
       reset(defaultCreatePlannedCostFormValues)
+      setPendingFiles([])
     } catch (error) {
       const apiError = toApiError(error)
       const fieldIssues = getFieldValidationIssues(apiError)
@@ -131,6 +184,8 @@ export function CreatePlannedCostForm({
       if (!hasOnlyFieldIssues) {
         setFormError(apiError.message)
       }
+    } finally {
+      setIsUploadingFiles(false)
     }
   })
 
@@ -148,6 +203,12 @@ export function CreatePlannedCostForm({
         {formError ? (
           <Alert severity="error" variant="outlined">
             {formError}
+          </Alert>
+        ) : null}
+
+        {submissionFeedback ? (
+          <Alert severity={submissionFeedback.severity} variant="outlined">
+            {submissionFeedback.message}
           </Alert>
         ) : null}
 
@@ -274,6 +335,12 @@ export function CreatePlannedCostForm({
             />
           </Stack>
         ) : null}
+
+        <PendingFileAttachmentsField
+          disabled={isSubmitting}
+          files={pendingFiles}
+          onChange={setPendingFiles}
+        />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">

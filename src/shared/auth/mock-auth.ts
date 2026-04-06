@@ -13,12 +13,12 @@ export interface MockAuthUser {
 
 export const MOCK_AUTH_USERS: readonly MockAuthUser[] = [
   {
-    id: 'viewer-1',
+    id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
     label: 'Демо наблюдатель',
     description: 'Может только просматривать уже созданные финансовые планы.',
   },
   {
-    id: 'editor-1',
+    id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
     label: 'Демо редактор',
     description: 'Может создавать и редактировать данные в MVP-сценарии.',
   },

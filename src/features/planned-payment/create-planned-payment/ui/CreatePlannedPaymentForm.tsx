@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Alert,
@@ -13,17 +14,22 @@ import {
 } from '@mui/material'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 
-import { useCreatePlannedPayment } from '../../../../entities/planned-payment/api/planned-payment.query'
+import {
+  plannedPaymentKeys,
+  useCreatePlannedPayment,
+} from '../../../../entities/planned-payment/api/planned-payment.query'
 import {
   PLANNED_PAYMENT_CONDITION_SOURCES,
   type PlannedPaymentConditionSource,
 } from '../../../../entities/planned-payment/model/types'
+import { uploadFileAttachment } from '../../../../shared/api/file-attachments.api'
 import { parseApiError } from '../../../../shared/api/parse-api-error'
 import type {
   ApiError,
   ApiValidationErrorDetails,
   ApiValidationIssue,
 } from '../../../../shared/types/api'
+import { PendingFileAttachmentsField } from '../../../../shared/ui/PendingFileAttachmentsField'
 import {
   createPlannedPaymentFormSchema,
   defaultCreatePlannedPaymentFormValues,
@@ -42,6 +48,11 @@ const FIELD_NAMES = new Set<keyof CreatePlannedPaymentFormValues>([
 
 const EMPTY_AUTOCOMPLETE_OPTIONS: string[] = []
 
+interface SubmissionFeedback {
+  message: string
+  severity: 'success' | 'warning'
+}
+
 interface CreatePlannedPaymentFormProps {
   projectFinanceId: string
   sectionFinancePlanId: string
@@ -53,8 +64,13 @@ export function CreatePlannedPaymentForm({
   sectionFinancePlanId,
   sectionFinancePlanName,
 }: CreatePlannedPaymentFormProps) {
+  const queryClient = useQueryClient()
   const createPlannedPaymentMutation = useCreatePlannedPayment()
   const [formError, setFormError] = useState<string | null>(null)
+  const [submissionFeedback, setSubmissionFeedback] =
+    useState<SubmissionFeedback | null>(null)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const {
     clearErrors,
     control,
@@ -88,14 +104,15 @@ export function CreatePlannedPaymentForm({
     }
   }, [clearErrors, conditionSource, setValue])
 
-  const isSubmitting = createPlannedPaymentMutation.isPending
+  const isSubmitting = createPlannedPaymentMutation.isPending || isUploadingFiles
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null)
+    setSubmissionFeedback(null)
     clearErrors()
 
     try {
-      await createPlannedPaymentMutation.mutateAsync(
+      const createdPlannedPayment = await createPlannedPaymentMutation.mutateAsync(
         mapCreatePlannedPaymentFormValuesToRequest(
           values,
           projectFinanceId,
@@ -103,7 +120,43 @@ export function CreatePlannedPaymentForm({
         ),
       )
 
+      const filesToUpload = pendingFiles
+
+      if (filesToUpload.length > 0) {
+        setIsUploadingFiles(true)
+
+        const uploadResults = await Promise.allSettled(
+          filesToUpload.map((file) =>
+            uploadFileAttachment({
+              file,
+              plannedPaymentId: createdPlannedPayment.id,
+            }),
+          ),
+        )
+        const failedFileNames = uploadResults.flatMap((result, index) =>
+          result.status === 'rejected' ? [filesToUpload[index]?.name ?? 'Без имени'] : [],
+        )
+
+        await queryClient.invalidateQueries({
+          queryKey: plannedPaymentKeys.list(createdPlannedPayment.projectFinanceId),
+        })
+
+        setSubmissionFeedback(
+          failedFileNames.length === 0
+            ? {
+                message:
+                  'Плановое поступление создано, выбранные файлы загружены автоматически.',
+                severity: 'success',
+              }
+            : {
+                message: `Плановое поступление создано, но часть файлов не загрузилась: ${failedFileNames.join(', ')}. Их можно добавить повторно из карточки записи.`,
+                severity: 'warning',
+              },
+        )
+      }
+
       reset(defaultCreatePlannedPaymentFormValues)
+      setPendingFiles([])
     } catch (error) {
       const apiError = toApiError(error)
       const fieldIssues = getFieldValidationIssues(apiError)
@@ -131,6 +184,8 @@ export function CreatePlannedPaymentForm({
       if (!hasOnlyFieldIssues) {
         setFormError(apiError.message)
       }
+    } finally {
+      setIsUploadingFiles(false)
     }
   })
 
@@ -148,6 +203,12 @@ export function CreatePlannedPaymentForm({
         {formError ? (
           <Alert severity="error" variant="outlined">
             {formError}
+          </Alert>
+        ) : null}
+
+        {submissionFeedback ? (
+          <Alert severity={submissionFeedback.severity} variant="outlined">
+            {submissionFeedback.message}
           </Alert>
         ) : null}
 
@@ -274,6 +335,12 @@ export function CreatePlannedPaymentForm({
             />
           </Stack>
         ) : null}
+
+        <PendingFileAttachmentsField
+          disabled={isSubmitting}
+          files={pendingFiles}
+          onChange={setPendingFiles}
+        />
 
         <Stack alignItems="flex-start" direction="row" justifyContent="flex-end">
           <Button disabled={isSubmitting} type="submit" variant="contained">

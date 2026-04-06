@@ -25,6 +25,7 @@ import type {
   ApiValidationErrorDetails,
   ApiValidationIssue,
 } from '../../../../shared/types/api'
+import { FileAttachmentsSection } from '../../../../shared/ui/FileAttachmentsSection'
 import {
   editPlannedCostFormSchema,
   getEditPlannedCostFormValues,
@@ -334,6 +335,17 @@ export function EditPlannedCostForm({
           />
         </Stack>
       ) : null}
+
+      <FileAttachmentsSection
+        canManageFiles
+        defaultExpanded
+        manageFilesHint=""
+        owner={{
+          id: plannedCost.id,
+          projectFinanceId: plannedCost.projectFinanceId,
+          type: 'planned-cost',
+        }}
+      />
 
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
         <Button

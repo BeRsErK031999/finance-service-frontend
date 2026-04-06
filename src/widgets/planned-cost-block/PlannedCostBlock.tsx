@@ -341,15 +341,17 @@ function PlannedCostListItem({
           />
         </Collapse>
 
-        <FileAttachmentsSection
-          canManageFiles={canManageFiles}
-          manageFilesHint={fileActionHint}
-          owner={{
-            id: plannedCost.id,
-            projectFinanceId: plannedCost.projectFinanceId,
-            type: 'planned-cost',
-          }}
-        />
+        {!isEditFormOpen ? (
+          <FileAttachmentsSection
+            canManageFiles={canManageFiles}
+            manageFilesHint={fileActionHint}
+            owner={{
+              id: plannedCost.id,
+              projectFinanceId: plannedCost.projectFinanceId,
+              type: 'planned-cost',
+            }}
+          />
+        ) : null}
 
         <ActualCostSection
           actualCosts={actualCosts}
