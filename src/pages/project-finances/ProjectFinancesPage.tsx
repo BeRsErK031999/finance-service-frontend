@@ -1,4 +1,5 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded'
 import {
   Button,
   Divider,
@@ -46,7 +47,28 @@ export function ProjectFinancesPage() {
     <PageContainer>
       <PageTitle
         action={
-          financeCapabilities.canCreateProjectFinance ? (
+          canViewProjectFinanceList ? (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Button
+                component={RouterLink}
+                startIcon={<TableChartRoundedIcon />}
+                to="/budgeting"
+                variant="outlined"
+              >
+                Бюджетирование
+              </Button>
+              {financeCapabilities.canCreateProjectFinance ? (
+                <Button
+                  component={RouterLink}
+                  startIcon={<AddRoundedIcon />}
+                  to="/project-finances/create"
+                  variant="contained"
+                >
+                  Создать финансовый план
+                </Button>
+              ) : null}
+            </Stack>
+          ) : financeCapabilities.canCreateProjectFinance ? (
             <Button
               component={RouterLink}
               startIcon={<AddRoundedIcon />}

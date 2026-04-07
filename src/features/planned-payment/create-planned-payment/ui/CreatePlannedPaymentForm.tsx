@@ -57,12 +57,14 @@ interface CreatePlannedPaymentFormProps {
   projectFinanceId: string
   sectionFinancePlanId: string
   sectionFinancePlanName: string
+  onSuccess?: () => void
 }
 
 export function CreatePlannedPaymentForm({
   projectFinanceId,
   sectionFinancePlanId,
   sectionFinancePlanName,
+  onSuccess,
 }: CreatePlannedPaymentFormProps) {
   const queryClient = useQueryClient()
   const createPlannedPaymentMutation = useCreatePlannedPayment()
@@ -110,6 +112,7 @@ export function CreatePlannedPaymentForm({
     setFormError(null)
     setSubmissionFeedback(null)
     clearErrors()
+    let hasUploadWarning = false
 
     try {
       const createdPlannedPayment = await createPlannedPaymentMutation.mutateAsync(
@@ -153,10 +156,15 @@ export function CreatePlannedPaymentForm({
                 severity: 'warning',
               },
         )
+        hasUploadWarning = failedFileNames.length > 0
       }
 
       reset(defaultCreatePlannedPaymentFormValues)
       setPendingFiles([])
+
+      if (!hasUploadWarning) {
+        onSuccess?.()
+      }
     } catch (error) {
       const apiError = toApiError(error)
       const fieldIssues = getFieldValidationIssues(apiError)

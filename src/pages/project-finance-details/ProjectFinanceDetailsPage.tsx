@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded'
+import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded'
 import UnfoldLessRoundedIcon from '@mui/icons-material/UnfoldLessRounded'
 import ViewAgendaRoundedIcon from '@mui/icons-material/ViewAgendaRounded'
 import {
@@ -409,6 +410,14 @@ function ProjectFinanceControlPanel({
             >
               <HelpOutlineRoundedIcon />
             </IconButton>
+            <Button
+              component={RouterLink}
+              startIcon={<TableChartRoundedIcon />}
+              to={`/project-finances/${projectFinance.id}/budget-table`}
+              variant="outlined"
+            >
+              Бюджетная таблица
+            </Button>
             <Button
               onClick={onCollapseAll}
               startIcon={<UnfoldLessRoundedIcon />}
